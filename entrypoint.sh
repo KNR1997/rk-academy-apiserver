@@ -16,6 +16,6 @@ echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
 echo "Starting Gunicorn..."
-exec gunicorn django_vps.wsgi:application \
+exec gunicorn academy.wsgi:application \
     --bind 0.0.0.0:8000 \
     --workers 3

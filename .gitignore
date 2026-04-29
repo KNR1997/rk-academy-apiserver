@@ -1,0 +1,42 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+.env/
+env/
+venv/
+ENV/
+.env
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.installed.cfg
+*.egg-info/
+parts/
+sdist/
+var/
+
+# Local databases
+db.sqlite3
+*.sqlite3
+/media/
+
+# IDE-specific files (e.g., VS Code, PyCharm)
+.idea/
+.vscode/
+*.swp
+
+# Django-specific
+*.log
+*.pot
+local_settings.py  # Used for local secrets not committed to the repo
+static/            # If collected static files are not meant for version control
+
+# OS-specific
+.DS_Store

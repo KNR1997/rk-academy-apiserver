@@ -83,8 +83,7 @@ class TeacherUpdateSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(write_only=True, required=False)
     username = serializers.CharField(write_only=True, required=False)
     email = serializers.EmailField(write_only=True, required=False)
-
-    # password = serializers.CharField(write_only=True, required=False)
+    mobile_number = serializers.CharField(write_only=True)
 
     class Meta:
         model = Teacher
@@ -119,7 +118,7 @@ class TeacherUpdateSerializer(serializers.ModelSerializer):
         last_name = validated_data.pop("last_name", None)
         username = validated_data.pop("username", None)
         email = validated_data.pop("email", None)
-        # password = validated_data.pop("password", None)
+        mobile_number = validated_data.pop("mobile_number", None)
 
         # Update User fields
         if first_name:
@@ -134,8 +133,8 @@ class TeacherUpdateSerializer(serializers.ModelSerializer):
         if email:
             user.email = email
 
-        # if password:
-        #     user.set_password(password)
+        if mobile_number:
+            user.mobile_number = mobile_number
 
         user.save()
 

@@ -22,7 +22,12 @@ urlpatterns = [
     ),
     path(
         "users/block-user",
-        UserViewSet.as_view({"post": "deactivate"}),
+        UserViewSet.as_view({"post": "block_user"}),
+        name="user",
+    ),
+    path(
+        "users/unblock-user",
+        UserViewSet.as_view({"post": "unblock_user"}),
         name="user",
     ),
 

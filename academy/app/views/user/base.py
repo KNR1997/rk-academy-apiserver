@@ -37,15 +37,29 @@ class UserViewSet(BaseViewSet):
         return super().destroy(request, *args, **kwargs)
 
     @allow_permission([ROLE.ADMIN])
-    def deactivate(self, request, *args, **kwargs):
-        logger.info("user_account_deactivate_started", requested_by=request.user.id)
+    def block_user(self, request, *args, **kwargs):
+        logger.info("user_account_block_started", requested_by=request.user.id)
 
-        deactivate_user_id = request.data['id']
-        user = User.objects.get(id=deactivate_user_id)
+        block_user_id = request.data['id']
+        user = User.objects.get(id=block_user_id)
 
-        # Deactivate the user
+        # Block the user
         user.is_active = False
         user.save()
 
-        logger.info("user_account_deactivate_completed", user_id=user.id, created_by=request.user.id)
+        logger.info("user_account_block_completed", user_id=user.id, created_by=request.user.id)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @allow_permission([ROLE.ADMIN])
+    def unblock_user(self, request, *args, **kwargs):
+        logger.info("user_account_unblock_started", requested_by=request.user.id)
+
+        unblock_user_id = request.data['id']
+        user = User.objects.get(id=unblock_user_id)
+
+        # Unblock the user
+        user.is_active = True
+        user.save()
+
+        logger.info("user_account_unblock_completed", user_id=user.id, created_by=request.user.id)
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -1,12 +1,12 @@
 from academy.db.models import Course, CourseOffering
 from .base import BaseSerializer
 from .grade_level import GradeLevelListSerializer
-from .subject import SubjectListSerializer
+from .subject import SubjectResponseSerializer
 from .teacher import TeacherListSerializer
 
 
 class CourseListSerializer(BaseSerializer):
-    subject = SubjectListSerializer()
+    subject = SubjectResponseSerializer()
 
     class Meta:
         model = Course

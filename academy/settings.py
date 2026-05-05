@@ -29,6 +29,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
+print('Secret key:', SECRET_KEY)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
@@ -60,6 +62,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'django_structlog',
+    'drf_spectacular',
 ]
 
 REST_FRAMEWORK = {
@@ -69,6 +72,13 @@ REST_FRAMEWORK = {
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'DEFAULT_PAGINATION_CLASS': 'academy.utils.pagination.LaravelLikePagination',
     'PAGE_SIZE': 10,  # or whatever default you prefer
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'rk-academy-apiserver',
+    'DESCRIPTION': 'API documentation',
+    'VERSION': '1.0.0',
 }
 
 MIDDLEWARE = [

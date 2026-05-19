@@ -1,7 +1,7 @@
 from django.urls import path
 
 from academy.app.views.student.base import StudentViewSet, StudentEnrollmentsEndpoint
-from academy.app.views.student.me import StudentMeEnrollmentViewSet, StudentMeEnrollmentVideosViewSet
+from academy.app.views.student.me import StudentMeEnrollmentViewSet, StudentMeEnrollmentVideosViewSet, StudentMeEnrollmentPaymentViewSet
 from academy.app.views.student.video import StudentWatchVideoEndpoint
 
 urlpatterns = [
@@ -40,5 +40,11 @@ urlpatterns = [
         "students/me/watch-videos/<uuid:pk>/",
         StudentWatchVideoEndpoint.as_view(),
         name="student-me-watch-video",
+    ),
+
+    path(
+        "students/me/enrollment-payments/",
+        StudentMeEnrollmentPaymentViewSet.as_view({"get": "list"}),
+        name="student-me-enrollment-payments",
     ),
 ]

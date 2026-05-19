@@ -1,6 +1,6 @@
 from django.urls import path
 
-from academy.app.views.enrollment.base import EnrollmentViewSet, EnrollmentPendingPaymentViewSet
+from academy.app.views.enrollment.base import EnrollmentViewSet, EnrollmentPendingPaymentViewSet, EnrollmentAnalyticsEndpoint
 from academy.app.views.enrollment.payment import EnrollmentPaymentViewSet
 
 urlpatterns = [
@@ -39,4 +39,9 @@ urlpatterns = [
         EnrollmentPendingPaymentViewSet.as_view({"get": "list"}),
         name="enrollment-payment",
     ),
+    path(
+        "enrollments/analytics",
+        EnrollmentAnalyticsEndpoint.as_view(),
+        name="enrollment-analytics",
+    )
 ]

@@ -2,13 +2,14 @@
 import structlog
 from django.db.models import Q
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 # Module imports
 from academy.app.permissions.base import allow_permission, ROLE
 from academy.app.serializers.enrollment import EnrollmentListSerializer, EnrollmentWithPaymentMonthsSerializer, \
     EnrollmentSerializer
-from academy.app.views.base import BaseViewSet
+from academy.app.views.base import BaseViewSet, BaseAPIView
 from academy.db.models import Enrollment, Student, CourseOffering
 
 logger = structlog.getLogger(__name__)
@@ -33,10 +34,10 @@ class EnrollmentViewSet(BaseViewSet):
                             'course_offering'
                             )
         )
-        logger.info("enrollment_queryset_loaded", user_id=self.request.user.id, role=self.request.user.role)
+        logger.info("enrollment_queryset_loaded")
         return queryset
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def list(self, request, *args, **kwargs):
         logger.info("enrollment_list_requested", requested_by=request.user.id, role=request.user.role)
 
@@ -64,7 +65,7 @@ class EnrollmentViewSet(BaseViewSet):
                     role=request.user.role)
         return super().retrieve(request, *args, **kwargs)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def create(self, request, *args, **kwargs):
         logger.info("enrollment_create_started", requested_by=request.user.id)
 
@@ -74,10 +75,9 @@ class EnrollmentViewSet(BaseViewSet):
         ).first()
 
         if enrollment:
-            return Response(
-                {"course_offering": "The student already enroll to this course."},
-                status=status.HTTP_409_CONFLICT,
-            )
+            raise ValidationError({
+                "course_offering": ["The student already enroll to this course"]
+            })
 
         student = Student.objects.get(pk=request.data.get("student"))
         course_offering = CourseOffering.objects.get(pk=request.data.get("course_offering"))
@@ -108,7 +108,7 @@ class EnrollmentViewSet(BaseViewSet):
         )
 
         serializer.is_valid(raise_exception=True)
-        enrollment = serializer.save()
+        serializer.save()
 
         logger.info("enrollment_updated", enrollment_id=enrollment.id, created_by=request.user.id)
         return Response(EnrollmentListSerializer(enrollment).data, status=status.HTTP_200_OK)
@@ -158,11 +158,28 @@ class EnrollmentPendingPaymentViewSet(BaseViewSet):
                     last_payment_month__lt=month
                 )
             )
-        logger.info("enrollment_pending_payment_queryset_loaded", user_id=self.request.user.id,
-                    role=self.request.user.role)
+        logger.info("enrollment_pending_payment_queryset_loaded")
         return self.filter_queryset(queryset)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def list(self, request, *args, **kwargs):
         logger.info("enrollment_pending_payment_list_requested", requested_by=request.user.id, role=request.user.role)
         return super().list(request, *args, **kwargs)
+
+
+class EnrollmentAnalyticsEndpoint(BaseAPIView):
+    def get(self, request):
+        grade_level = request.query_params.get("grade_level")
+
+        queryset = Student.objects.filter(is_active=True)
+
+        if grade_level:
+            queryset = queryset.filter(urrent_grade__name=grade_level)
+        
+        active_students_count = queryset.count()
+
+        data = {
+            "active_students": active_students_count
+        }
+
+        return Response(data, status=status.HTTP_200_OK)

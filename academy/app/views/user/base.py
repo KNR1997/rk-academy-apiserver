@@ -17,13 +17,14 @@ class UserViewSet(BaseViewSet):
     serializer_class = UserListSerializer
 
     search_fields = ["username", "email"]
-    ordering_fields = ['first_name', 'is_active', 'created_at']
+    filterset_fields = ['role']
+    ordering_fields = ['first_name', 'is_active', '-created_at']
 
     def get_queryset(self):
         queryset = (
             self.filter_queryset(super().get_queryset())
         )
-        logger.info("user_queryset_loaded", user_id=self.request.user.id, role=self.request.user.role)
+        logger.info("user_queryset_loaded")
         return queryset
 
     @allow_permission([ROLE.ADMIN])

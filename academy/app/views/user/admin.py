@@ -1,11 +1,12 @@
 # Third party imports
 import structlog
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 # Module imports
 from academy.app.permissions.base import ROLE, allow_permission
-from academy.app.serializers.authentication import ResetTeacherPasswordSerializer
+from academy.app.serializers.authentication import ResetTeacherPasswordSerializer, ResetUserPasswordSerializer
 from academy.app.serializers.user import UserListSerializer
 from academy.app.views.base import BaseViewSet, BaseAPIView
 from academy.db.models import User, Teacher
@@ -53,4 +54,32 @@ class ResetTeacherPasswordEndpoint(BaseAPIView):
         user.save()
 
         logger.info("admin_rest_teacher_password_completed", teacher_id=teacher_id, created_by=request.user.id)
+        return Response(status=status.HTTP_200_OK)
+
+
+class ResetUserPasswordEndpoint(BaseAPIView):
+    @allow_permission([ROLE.ADMIN])
+    def post(self, request, *args, **kwargs):
+        logger.info("admin_rest_user_password_started", requested_by=request.user.id)
+
+        serializer = ResetUserPasswordSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        user_id = self.kwargs.get("user_id")
+
+        user = User.objects.get(pk=user_id)
+
+        # if user.role == ROLE.ADMIN:
+        #     raise ValidationError({
+        #         "password": [""]
+        #     })
+
+        user.set_password(serializer.validated_data.get("password"))
+
+        user.save()
+
+        logger.info("admin_rest_user_password_completed", user_id=user_id, created_by=request.user.id)
         return Response(status=status.HTTP_200_OK)

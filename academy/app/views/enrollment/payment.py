@@ -58,7 +58,7 @@ class EnrollmentPaymentViewSet(BaseViewSet):
                         enrollment_id=enrollment.id, created_by=request.user.id)
             return Response(EnrollmentPaymentListSerializer(enrollment_payment).data, status=status.HTTP_201_CREATED)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def list(self, request, *args, **kwargs):
         logger.info("enrollment_payment_list_requested", requested_by=request.user.id, role=request.user.role)
         return super().list(request, *args, **kwargs)

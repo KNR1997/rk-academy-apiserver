@@ -82,6 +82,16 @@ SUBJECT_NOT_FOUND_RESPONSE = OpenApiResponse(
     ],
 )
 
+# Teacher-specific Responses
+TEACHER_NOT_FOUND_RESPONSE = OpenApiResponse(
+    description="Teacher not found",
+    examples=[
+        OpenApiExample(
+            name="Teacher Not Found",
+            value={"error": "Teacher not found"},
+        )
+    ],
+)
 
 # Pagination Response Templates
 def create_paginated_response(

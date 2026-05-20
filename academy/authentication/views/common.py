@@ -1,5 +1,6 @@
 # Third party imports
 import structlog
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiExample
 from rest_framework import status, serializers
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -53,6 +54,28 @@ class SigninView(APIView):
     authentication_classes = []
     permission_classes = []
 
+    @extend_schema(
+        request=SigninSerializer,
+        responses={
+            201: OpenApiResponse(
+                description="Admin created successfully",
+                response=None  # or a serializer if you return structured data
+            ),
+            400: OpenApiResponse(description="Validation error"),
+        },
+        examples=[
+            OpenApiExample(
+                "Example Request",
+                value={
+                    "email": "admin@demo.com",
+                    "password": "demodemo",
+                },
+                request_only=True,
+            ),
+        ],
+        description="Signin and get token",
+        summary="User signin"
+    )
     def post(self, request):
         logger.info("signin_started")
 
@@ -84,6 +107,37 @@ class SigninView(APIView):
 class CreateAdminView(APIView):
     permission_classes = []
 
+    @extend_schema(
+        request=SignupSerializer,
+        responses={
+            201: OpenApiResponse(
+                description="Admin created successfully",
+                response=None  # or a serializer if you return structured data
+            ),
+            400: OpenApiResponse(description="Validation error"),
+        },
+        examples=[
+            OpenApiExample(
+                "Example Request",
+                value={
+                    "username": "johnDoe",
+                    "email": "admin@example.com",
+                    "password": "strongpassword123",
+                    "password2": "strongpassword123",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                },
+                request_only=True,
+            ),
+            OpenApiExample(
+                "Example Response",
+                value={"detail": "Admin created successfully"},
+                response_only=True,
+            ),
+        ],
+        description="Create a new admin user",
+        summary="Create Admin"
+    )
     def post(self, request):
         logger.info("create_admin_started", requested_by=request.user.id)
 

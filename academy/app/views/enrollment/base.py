@@ -30,9 +30,10 @@ class EnrollmentViewSet(BaseViewSet):
     def get_queryset(self):
         queryset = (
             self.filter_queryset(super().get_queryset())
-            .select_related('student',
-                            'course_offering'
-                            )
+            .select_related(
+                'student',
+                'course_offering'       
+            )
         )
         logger.info("enrollment_queryset_loaded")
         return queryset
@@ -59,7 +60,7 @@ class EnrollmentViewSet(BaseViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def retrieve(self, request, *args, **kwargs):
         logger.info("enrollment_get_requested", enrollment_id=self.kwargs.get("pk"), requested_by=request.user.id,
                     role=request.user.role)
@@ -96,7 +97,7 @@ class EnrollmentViewSet(BaseViewSet):
         logger.info("enrollment_created", enrollment_id=enrollment.id, created_by=request.user.id)
         return Response(EnrollmentListSerializer(enrollment).data, status=status.HTTP_201_CREATED)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def update(self, request, *args, **kwargs):
         enrollment = Enrollment.objects.get(pk=kwargs["pk"])
         logger.info("enrollment_update_started", enrollment_id=enrollment.id, requested_by=request.user.id)
@@ -113,7 +114,7 @@ class EnrollmentViewSet(BaseViewSet):
         logger.info("enrollment_updated", enrollment_id=enrollment.id, created_by=request.user.id)
         return Response(EnrollmentListSerializer(enrollment).data, status=status.HTTP_200_OK)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def partial_update(self, request, *args, **kwargs):
         logger.info("enrollment_partial_update_started", enrollment_id=self.kwargs.get("pk"),
                     requested_by=request.user.id)
@@ -123,7 +124,7 @@ class EnrollmentViewSet(BaseViewSet):
         logger.info("enrollment_partial_updated", enrollment_id=self.kwargs.get("pk"), requested_by=request.user.id)
         return Response(None, status=status.HTTP_204_NO_CONTENT)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def destroy(self, request, *args, **kwargs):
         enrollment_id = self.kwargs.get("pk")
         logger.info("enrollment_delete_started", enrollment_id=enrollment_id, requested_by=request.user.id)

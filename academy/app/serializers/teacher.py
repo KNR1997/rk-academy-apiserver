@@ -14,6 +14,12 @@ class TeacherListSerializer(serializers.ModelSerializer):
         fields = ['id', 'department', 'user', 'is_active']
 
 
+class TeacherLiteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = ['id', 'department', 'specialization', 'is_active']
+
+
 class TeacherCreateSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(write_only=True, required=False)
     last_name = serializers.CharField(write_only=True, required=False)
@@ -24,8 +30,24 @@ class TeacherCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Teacher
-        fields = "__all__"
-        read_only_fields = ["student_number", "user"]
+        fields = [
+            # User model related fields
+            "first_name",
+            "last_name",
+            "username",
+            "email",
+            "password",
+            "mobile_number",
+
+            # Teacher model related fields
+            "department",
+            "specialization",
+            "hire_date",
+            "office_location",
+            "office_hours",
+            "bio",
+            "is_active",
+        ]
 
     # --- VALIDATION ---
     def validate_username(self, value):
@@ -94,13 +116,15 @@ class TeacherUpdateSerializer(serializers.ModelSerializer):
     def validate_username(self, value):
         user = self.instance.user
         if User.objects.filter(username=value).exclude(id=user.id).exists():
-            raise serializers.ValidationError("User with this username already exists.")
+            raise serializers.ValidationError(
+                "User with this username already exists.")
         return value
 
     def validate_email(self, value):
         user = self.instance.user
         if User.objects.filter(email=value).exclude(id=user.id).exists():
-            raise serializers.ValidationError("User with this email already exists.")
+            raise serializers.ValidationError(
+                "User with this email already exists.")
         return value
 
     # --- UPDATE ---

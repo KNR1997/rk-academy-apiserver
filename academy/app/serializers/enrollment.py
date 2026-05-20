@@ -2,6 +2,7 @@ import calendar
 
 from django.utils import timezone
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
 from academy.app.serializers.base import BaseSerializer
 from academy.app.serializers.course import CourseOfferingListSerializer
@@ -131,56 +132,65 @@ class EnrollmentPaymentCreateSerializer(BaseSerializer):
 
     class Meta:
         model = EnrollmentPayment
-        fields = '__all__'
-        read_only_fields = ['payment_date', 'enrollment']
+        fields = "__all__"
+        read_only_fields = ["payment_date", "enrollment"]
 
     def validate(self, attrs):
         enrollment_id = attrs.get("enrollment_id")
 
         enrollment = Enrollment.objects.filter(pk=enrollment_id).first()
 
+        # Enrollment existence
         if not enrollment:
-            raise serializers.ValidationError(
-                {"course": "Student not enrolled to this course"}
-            )
+            raise ValidationError({
+                "enrollment": ["Enrollment does not exist"]
+            })
 
-        # save enrollment into serializer instance
+        # Enrollment active check
+        if not enrollment.is_active:
+            raise ValidationError({
+                "enrollment": ["Enrollment is not active"]
+            })
+
         attrs["enrollment"] = enrollment
 
-        # --- NEW DATE VALIDATION ---
+        # Date validation
         current = timezone.now().date()
-        current_month = current.month
-        current_year = current.year
+
+        current_value = current.year * 12 + current.month
 
         pay_month = attrs["payment_month"]
         pay_year = attrs["payment_year"]
 
-        # Convert both to comparable "year * 12 + month"
-        current_value = current_year * 12 + current_month
         pay_value = pay_year * 12 + pay_month
 
         if pay_value < current_value:
-            raise serializers.ValidationError(
-                {"payment_month": "Payment month/year cannot be in the past."}
-            )
+            raise ValidationError({
+                "payment_month": ["Payment month/year cannot be in the past"]
+            })
 
-        # Check duplicate payment
-        if EnrollmentPayment.objects.filter(
-                enrollment=enrollment,
-                payment_month=attrs["payment_month"],
-                payment_year=attrs["payment_year"],
-        ).exists():
-            raise serializers.ValidationError(
-                {"payment_month": "Already paid for this course"}
-            )
+        # Duplicate payment validation
+        already_paid = EnrollmentPayment.objects.filter(
+            enrollment=enrollment,
+            payment_month=pay_month,
+            payment_year=pay_year,
+        ).exists()
+
+        if already_paid:
+            raise serializers.ValidationError({
+                "payment_month": [
+                    {
+                        "message": "Payment already exists for this month.",
+                        "code": "PAYMENT_ALREADY_EXISTS"
+                    }
+                ]
+            })
 
         return attrs
 
     def create(self, validated_data):
         validated_data.pop("student", None)
-        # validated_data.pop("course_offering", None)
 
-        # automatic payment date
         validated_data["payment_date"] = timezone.now().date()
 
         return EnrollmentPayment.objects.create(**validated_data)

@@ -22,6 +22,7 @@ from .responses import (
     FORBIDDEN_RESPONSE,
     SUBJECT_NOT_FOUND_RESPONSE,
     NOT_FOUND_RESPONSE,
+    TEACHER_NOT_FOUND_RESPONSE,
     create_paginated_response,
 )
 
@@ -34,6 +35,7 @@ __all__ = [
     "UNAUTHORIZED_RESPONSE",
     "FORBIDDEN_RESPONSE",
     "SUBJECT_NOT_FOUND_RESPONSE",
+    "TEACHER_NOT_FOUND_RESPONSE",
     "NOT_FOUND_RESPONSE",
     "create_paginated_response",
 ]

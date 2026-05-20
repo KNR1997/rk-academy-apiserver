@@ -5,7 +5,7 @@ from .subject import SubjectResponseSerializer
 from .teacher import TeacherListSerializer
 
 
-class CourseListSerializer(BaseSerializer):
+class CourseResponseSerializer(BaseSerializer):
     subject = SubjectResponseSerializer()
 
     class Meta:
@@ -19,14 +19,37 @@ class CourseListSerializer(BaseSerializer):
         )
 
 
+class CourseLiteSerializer(BaseSerializer):
+    class Meta:
+        model = Course
+        fields = (
+            "id",
+            "name",
+            "code",
+            "slug",
+        )
+
+
 class CourseSerializer(BaseSerializer):
     class Meta:
         model = Course
         fields = '__all__'
 
 
+class CourseCreateSerializer(BaseSerializer):
+    class Meta:
+        model = Course
+        fields = ["name", "code", "slug", "subject"]
+
+
+class CourseUpdateSerializer(BaseSerializer):
+    class Meta:
+        model = Course
+        fields = ["name", "code", "slug", "subject"]
+
+
 class CourseOfferingListSerializer(BaseSerializer):
-    course = CourseListSerializer()
+    course = CourseResponseSerializer()
     teacher = TeacherListSerializer()
     grade_level = GradeLevelListSerializer()
 
@@ -36,6 +59,18 @@ class CourseOfferingListSerializer(BaseSerializer):
             'id',
             'course',
             'teacher',
+            'fee',
+            'year',
+            'batch',
+            'grade_level'
+        ]
+
+
+class CourseOfferingResponseSerializer(BaseSerializer):
+    class Meta:
+        model = CourseOffering
+        fields = [
+            'id',
             'fee',
             'year',
             'batch',
@@ -54,9 +89,15 @@ class CourseOfferingSerializer(BaseSerializer):
         return instance
 
 
+class CourseOfferingCreateSerializer(BaseSerializer):
+    class Meta:
+        model = CourseOffering
+        fields = ['course', 'teacher', 'grade_level', 'fee', 'year', 'batch']
+
+
 class CourseOfferingLiteSerializer(BaseSerializer):
     grade_level = GradeLevelListSerializer()
-    course = CourseListSerializer()
+    course = CourseResponseSerializer()
 
     class Meta:
         model = CourseOffering

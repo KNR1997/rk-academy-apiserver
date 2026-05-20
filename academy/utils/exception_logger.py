@@ -18,6 +18,7 @@ def log_exception(e):
 
     if settings.DEBUG:
         # Print the traceback if in debug mode
-        print(traceback.format_exc())
+        # print(traceback.format_exc())
+        ...
 
     return

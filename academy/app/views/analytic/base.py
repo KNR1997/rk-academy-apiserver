@@ -6,7 +6,6 @@ from rest_framework.response import Response
 # Module imports
 from academy.app.views.base import BaseAPIView
 from academy.db.models import Student, Enrollment
-from academy.db.models.enrollment import EnrollmentStatusType
 
 logger = structlog.getLogger(__name__)
 
@@ -18,7 +17,7 @@ class InstituteAnalyticsDataEndpoint(BaseAPIView):
 
         student_count = Student.objects.all().count()
         enrollment_count = Enrollment.objects.all().count()
-        active_enrollment_count = Enrollment.objects.filter(status=EnrollmentStatusType.ACTIVE).count()
+        active_enrollment_count = Enrollment.objects.filter(is_active=True).count()
 
         output = {
             "total_revenue": 0,

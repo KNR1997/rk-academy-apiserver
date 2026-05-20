@@ -1,7 +1,12 @@
+# Python imports
+import traceback
+
 # Django imports
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import IntegrityError
 from django_filters.rest_framework import DjangoFilterBackend
+
 # Third part imports
 from rest_framework import status
 from rest_framework.exceptions import APIException
@@ -34,30 +39,45 @@ class BaseViewSet(ModelViewSet):
             raise APIException("Please check the view")
 
     def handle_exception(self, exc):
+        """
+        Handle any exception that occurs, by returning an appropriate response,
+        or re-raising the error.
+        """
+        try:
+            response = super().handle_exception(exc)
+            return response
+        except Exception as e:
+            # (print(e, traceback.format_exc()) if settings.DEBUG else print("Server Error"))
+            if isinstance(e, IntegrityError):
+                return Response(
+                    {"error": "The payload is not valid"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        # Log all unexpected exceptions
-        if not isinstance(exc, APIException):
-            log_exception(exc)
+            if isinstance(e, ValidationError):
+                return Response(
+                    {"error": "Please provide valid detail"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
-        if isinstance(exc, IntegrityError):
+            if isinstance(e, ObjectDoesNotExist):
+                return Response(
+                    {"error": "The required object does not exist."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            if isinstance(e, KeyError):
+                log_exception(e)
+                return Response(
+                    {"error": "The required key does not exist."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            log_exception(e)
             return Response(
-                {"error": "The payload is not valid"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "Something went wrong please try again later"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-        if isinstance(exc, ValidationError):
-            return Response(
-                {"error": "Please provide valid detail"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if isinstance(exc, ObjectDoesNotExist):
-            return Response(
-                {"error": "The required object does not exist."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        return super().handle_exception(exc)
 
 
 class BaseAPIView(APIView):

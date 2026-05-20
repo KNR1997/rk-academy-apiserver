@@ -56,3 +56,7 @@ class ChangeEmailSerializer(serializers.Serializer):
 
 class ResetTeacherPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
+
+
+class ResetUserPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)

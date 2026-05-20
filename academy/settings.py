@@ -29,8 +29,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-print('Secret key:', SECRET_KEY)
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
@@ -74,7 +72,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'academy.utils.pagination.LaravelLikePagination',
     'PAGE_SIZE': 10,  # or whatever default you prefer
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
+    # "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 }
 
 DRF_STANDARDIZED_ERRORS = {

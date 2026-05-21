@@ -1,9 +1,10 @@
 # Third party imports
 import structlog
 from django.db.models import Q
-from rest_framework import status
+from rest_framework import status, serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema, OpenApiResponse, OpenApiRequest, inline_serializer
 
 # Module imports
 from academy.app.permissions.base import allow_permission, ROLE
@@ -11,6 +12,13 @@ from academy.app.serializers.enrollment import EnrollmentListSerializer, Enrollm
     EnrollmentSerializer
 from academy.app.views.base import BaseViewSet, BaseAPIView
 from academy.db.models import Enrollment, Student, CourseOffering
+from academy.utils.openapi import (
+    ID_PARAMETER,
+    UNAUTHORIZED_RESPONSE,
+    FORBIDDEN_RESPONSE,
+    NOT_FOUND_RESPONSE,
+    create_paginated_response,
+)
 
 logger = structlog.getLogger(__name__)
 
@@ -38,6 +46,22 @@ class EnrollmentViewSet(BaseViewSet):
         logger.info("enrollment_queryset_loaded")
         return queryset
 
+    @extend_schema(
+        operation_id="list_enrollments",
+        summary="List or retrieve enrollments",
+        description="Retrieve all enrollments.",
+        tags=["Enrollments"],
+        responses={
+            200: create_paginated_response(
+                EnrollmentWithPaymentMonthsSerializer,
+                "PaginatedEnrollmentResponse",
+                "Paginated list of enrollments",
+                "Paginated Enrollments",
+            ),
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+        },
+    )
     @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def list(self, request, *args, **kwargs):
         logger.info("enrollment_list_requested", requested_by=request.user.id, role=request.user.role)
@@ -60,12 +84,34 @@ class EnrollmentViewSet(BaseViewSet):
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        operation_id="get_enrollment",
+        summary="Get enrollment",
+        description="Get an enrollment by id.",
+        tags=["Enrollments"],
+        parameters=[ID_PARAMETER],
+        responses={
+            201: OpenApiResponse(description="Enrollment", response=EnrollmentListSerializer),
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+            404: NOT_FOUND_RESPONSE,
+        },
+    )
     @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def retrieve(self, request, *args, **kwargs):
         logger.info("enrollment_get_requested", enrollment_id=self.kwargs.get("pk"), requested_by=request.user.id,
                     role=request.user.role)
         return super().retrieve(request, *args, **kwargs)
 
+    @extend_schema(
+        operation_id="create_enrollment",
+        summary="Create enrollment",
+        description="Create an enrollment",
+        tags=["Enrollments"],
+        responses={201: OpenApiResponse(
+            description="Course created", response=EnrollmentListSerializer)},
+        request=OpenApiRequest(request=EnrollmentSerializer),
+    )
     @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def create(self, request, *args, **kwargs):
         logger.info("enrollment_create_started", requested_by=request.user.id)
@@ -97,6 +143,16 @@ class EnrollmentViewSet(BaseViewSet):
         logger.info("enrollment_created", enrollment_id=enrollment.id, created_by=request.user.id)
         return Response(EnrollmentListSerializer(enrollment).data, status=status.HTTP_201_CREATED)
 
+    @extend_schema(
+        operation_id="update_enrollment",
+        summary="Update enrollment",
+        description="Update an enrollment",
+        tags=["Enrollments"],
+        parameters=[ID_PARAMETER],
+        responses={204: OpenApiResponse(
+            description="Enrollment updated", response=EnrollmentListSerializer)},
+        request=OpenApiRequest(request=EnrollmentSerializer),
+    )
     @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def update(self, request, *args, **kwargs):
         enrollment = Enrollment.objects.get(pk=kwargs["pk"])
@@ -114,16 +170,24 @@ class EnrollmentViewSet(BaseViewSet):
         logger.info("enrollment_updated", enrollment_id=enrollment.id, created_by=request.user.id)
         return Response(EnrollmentListSerializer(enrollment).data, status=status.HTTP_200_OK)
 
-    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
-    def partial_update(self, request, *args, **kwargs):
-        logger.info("enrollment_partial_update_started", enrollment_id=self.kwargs.get("pk"),
-                    requested_by=request.user.id)
+    # @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
+    # def partial_update(self, request, *args, **kwargs):
+    #     logger.info("enrollment_partial_update_started", enrollment_id=self.kwargs.get("pk"),
+    #                 requested_by=request.user.id)
 
-        super().partial_update(request, *args, **kwargs)
+    #     super().partial_update(request, *args, **kwargs)
 
-        logger.info("enrollment_partial_updated", enrollment_id=self.kwargs.get("pk"), requested_by=request.user.id)
-        return Response(None, status=status.HTTP_204_NO_CONTENT)
+    #     logger.info("enrollment_partial_updated", enrollment_id=self.kwargs.get("pk"), requested_by=request.user.id)
+    #     return Response(None, status=status.HTTP_204_NO_CONTENT)
 
+    @extend_schema(
+        operation_id="delete_enrollment",
+        summary="Delete enrollment",
+        description="Delete an enrollment",
+        tags=["Enrollments"],
+        parameters=[ID_PARAMETER],
+        responses={204: OpenApiResponse(description="Enrollment deleted")},
+    )
     @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def destroy(self, request, *args, **kwargs):
         enrollment_id = self.kwargs.get("pk")
@@ -162,6 +226,22 @@ class EnrollmentPendingPaymentViewSet(BaseViewSet):
         logger.info("enrollment_pending_payment_queryset_loaded")
         return self.filter_queryset(queryset)
 
+    @extend_schema(
+        operation_id="list_pending_payment_enrollments",
+        summary="List or pending payment enrollments",
+        description="Retrieve all pending payment enrollments.",
+        tags=["Enrollments"],
+        responses={
+            200: create_paginated_response(
+                EnrollmentListSerializer,
+                "PaginatedEnrollmentResponse",
+                "Paginated list of enrollments",
+                "Paginated Enrollments",
+            ),
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+        },
+    )
     @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def list(self, request, *args, **kwargs):
         logger.info("enrollment_pending_payment_list_requested", requested_by=request.user.id, role=request.user.role)
@@ -169,13 +249,30 @@ class EnrollmentPendingPaymentViewSet(BaseViewSet):
 
 
 class EnrollmentAnalyticsEndpoint(BaseAPIView):
+    @extend_schema(
+        operation_id="enrollment_analytics",
+        summary="Enrollment analytics details",
+        description="Retrieve enrollment analytics details.",
+        tags=["Enrollments"],
+        responses={
+            200: inline_serializer(
+                name="EnrollmentAnalyticsResponse",
+                fields={
+                    "active_students": serializers.IntegerField(),
+                },
+            ),
+            401: UNAUTHORIZED_RESPONSE,
+            403: FORBIDDEN_RESPONSE,
+        },
+    )
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def get(self, request):
         grade_level = request.query_params.get("grade_level")
 
         queryset = Student.objects.filter(is_active=True)
 
         if grade_level:
-            queryset = queryset.filter(urrent_grade__name=grade_level)
+            queryset = queryset.filter(current_grade__name=grade_level)
         
         active_students_count = queryset.count()
 

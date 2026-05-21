@@ -14,7 +14,7 @@ urlpatterns = [
         EnrollmentViewSet.as_view({
             "get": "retrieve",
             "put": "update",
-            "patch": "partial_update",
+            # "patch": "partial_update",
             "delete": "destroy",
         }),
         name="enrollment",

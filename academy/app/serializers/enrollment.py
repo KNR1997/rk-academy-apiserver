@@ -178,12 +178,7 @@ class EnrollmentPaymentCreateSerializer(BaseSerializer):
 
         if already_paid:
             raise serializers.ValidationError({
-                "payment_month": [
-                    {
-                        "message": "Payment already exists for this month.",
-                        "code": "PAYMENT_ALREADY_EXISTS"
-                    }
-                ]
+                "payment_month": ["Payment already exists for this month."]
             })
 
         return attrs

@@ -14,7 +14,7 @@ class Student(BaseModel):
         'db.GradeLevel', on_delete=models.PROTECT, related_name='current_students'
     )
     current_academic_year = models.ForeignKey(
-        'db.AcademicYear', on_delete=models.PROTECT, related_name='current_students'
+        'db.AcademicYear', on_delete=models.PROTECT, related_name='current_students', blank=True, null=True
     )
 
     # Student personal information

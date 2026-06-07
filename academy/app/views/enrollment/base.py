@@ -129,11 +129,11 @@ class EnrollmentViewSet(BaseViewSet):
         student = Student.objects.get(pk=request.data.get("student"))
         course_offering = CourseOffering.objects.get(pk=request.data.get("course_offering"))
 
-        if student.current_grade != course_offering.grade_level:
-            return Response(
-                {"course_offering": "Invalid course assignment."},
-                status=status.HTTP_409_CONFLICT,
-            )
+        # if student.current_grade != course_offering.grade_level:
+        #     return Response(
+        #         {"course_offering": "Invalid course assignment."},
+        #         status=status.HTTP_409_CONFLICT,
+        #     )
 
         serializer = EnrollmentSerializer(data=request.data)
 

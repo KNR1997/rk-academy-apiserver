@@ -3,15 +3,11 @@ import structlog
 from rest_framework import status
 from rest_framework.response import Response
 
-# Django imports
-from django.db import transaction
-
 # Module imports
 from academy.app.permissions.base import allow_permission, ROLE
 from academy.app.serializers.enrollment import EnrollmentPaymentListSerializer, EnrollmentPaymentCreateSerializer
 from academy.app.views.base import BaseViewSet
 from academy.db.models import EnrollmentPayment
-from academy.db.models.enrollment import EnrollmentStatusType
 
 logger = structlog.getLogger(__name__)
 
@@ -34,29 +30,19 @@ class EnrollmentPaymentViewSet(BaseViewSet):
         queryset = (
             self.filter_queryset(super().get_queryset().select_related('enrollment'))
         )
-        logger.info("enrollment_payment_queryset_loaded", user_id=self.request.user.id, role=self.request.user.role)
+        logger.info("enrollment_payment_queryset_loaded")
         return queryset
 
     @allow_permission([ROLE.ADMIN])
     def create(self, request, *args, **kwargs):
-        with transaction.atomic():
-            logger.info("enrollment_payment_create_started", requested_by=request.user.id)
+        logger.info("enrollment_payment_create_started", requested_by=request.user.id)
 
-            serializer = EnrollmentPaymentCreateSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            enrollment_payment = serializer.save()
+        serializer = EnrollmentPaymentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-            enrollment = enrollment_payment.enrollment
-
-            enrollment.last_payment_month = enrollment_payment.payment_month
-            enrollment.last_payment_year = enrollment_payment.payment_year
-            enrollment.status = EnrollmentStatusType.ACTIVE
-
-            enrollment.save()
-
-            logger.info("enrollment_payment_created", enrollment_payment_id=enrollment_payment.id,
-                        enrollment_id=enrollment.id, created_by=request.user.id)
-            return Response(EnrollmentPaymentListSerializer(enrollment_payment).data, status=status.HTTP_201_CREATED)
+        logger.info("enrollment_payment_created", created_by=request.user.id)
+        return Response(None, status=status.HTTP_201_CREATED)
 
     @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def list(self, request, *args, **kwargs):

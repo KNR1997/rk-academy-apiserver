@@ -1,6 +1,8 @@
 import calendar
+from datetime import date
 
 from django.utils import timezone
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -101,7 +103,8 @@ class EnrollmentWithPaymentMonthsSerializer(BaseSerializer):
         payment_map = {
             p.payment_month: p
             for p in payments
-            if p.payment_year == enrollment.last_payment_year
+            # if p.payment_year == enrollment.last_payment_year
+            # if p.payment_year == date.
         }
 
         months = {}
@@ -126,19 +129,23 @@ class EnrollmentPaymentSerializer(BaseSerializer):
         fields = '__all__'
 
 
-class EnrollmentPaymentCreateSerializer(BaseSerializer):
-    student = serializers.UUIDField(write_only=True)
-    enrollment_id = serializers.UUIDField(write_only=True)
+class PaymentSerializer(serializers.Serializer):
+    amount = serializers.FloatField()
+    payment_month = serializers.IntegerField()
+    payment_year = serializers.IntegerField()
 
-    class Meta:
-        model = EnrollmentPayment
-        fields = "__all__"
-        read_only_fields = ["payment_date", "enrollment"]
+
+class EnrollmentPaymentCreateSerializer(serializers.Serializer):
+    enrollment_id = serializers.UUIDField()
+    student = serializers.UUIDField()
+    payments = PaymentSerializer(many=True)
 
     def validate(self, attrs):
-        enrollment_id = attrs.get("enrollment_id")
+        enrollment_id = attrs["enrollment_id"]
 
-        enrollment = Enrollment.objects.filter(pk=enrollment_id).first()
+        enrollment = Enrollment.objects.filter(
+            pk=enrollment_id
+        ).first()
 
         # Enrollment existence
         if not enrollment:
@@ -152,43 +159,57 @@ class EnrollmentPaymentCreateSerializer(BaseSerializer):
                 "enrollment": ["Enrollment is not active"]
             })
 
-        attrs["enrollment"] = enrollment
+        seen = set()
+        errors = {}
 
-        # Date validation
-        current = timezone.now().date()
+        for idx, payment in enumerate(attrs["payments"]):
+            key = (
+                payment["payment_month"],
+                payment["payment_year"],
+            )
 
-        current_value = current.year * 12 + current.month
+            if key in seen:
+                errors[f"payments.{idx}.payment_month"] = [
+                    f"Duplicate month {payment['payment_month']} found in request."
+                ]
 
-        pay_month = attrs["payment_month"]
-        pay_year = attrs["payment_year"]
+            seen.add(key)
 
-        pay_value = pay_year * 12 + pay_month
+            already_paid = EnrollmentPayment.objects.filter(
+                enrollment=enrollment,
+                payment_month=payment["payment_month"],
+                payment_year=payment["payment_year"],
+            ).exists()
 
-        if pay_value < current_value:
-            raise ValidationError({
-                "payment_month": ["Payment month/year cannot be in the past"]
-            })
+            if already_paid:
+                errors[f"payments.{idx}.payment_month"] = [
+                    f"Payment already exists for month {payment['payment_month']}, year {payment['payment_year']}."
+                ]
 
-        # Duplicate payment validation
-        already_paid = EnrollmentPayment.objects.filter(
-            enrollment=enrollment,
-            payment_month=pay_month,
-            payment_year=pay_year,
-        ).exists()
-
-        if already_paid:
-            raise serializers.ValidationError({
-                "payment_month": ["Payment already exists for this month."]
-            })
+        if errors:
+            raise ValidationError(errors)
 
         return attrs
 
+    @transaction.atomic
     def create(self, validated_data):
-        validated_data.pop("student", None)
+        enrollment_id = validated_data["enrollment_id"]
+        payments = validated_data["payments"]
 
-        validated_data["payment_date"] = timezone.now().date()
+        enrollment_payments = [
+            EnrollmentPayment(
+                enrollment_id=enrollment_id,
+                payment_month=payment["payment_month"],
+                payment_year=payment["payment_year"],
+                amount=payment["amount"],
+                payment_date=timezone.now().date(),
+            )
+            for payment in payments
+        ]
 
-        return EnrollmentPayment.objects.create(**validated_data)
+        EnrollmentPayment.objects.bulk_create(enrollment_payments)
+
+        return enrollment_payments
 
 
 class EnrollmentPaymentListSerializer(BaseSerializer):

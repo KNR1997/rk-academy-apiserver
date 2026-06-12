@@ -22,6 +22,7 @@ class VideoCreateSerializer(BaseSerializer):
             'month',
             'year',
             'course_offering_id',
+            'video_date',
         ]
 
     def create(self, validated_data):
@@ -127,6 +128,7 @@ class VideoUpdateSerializer(BaseSerializer):
             'month',
             'year',
             'course_offering_id',
+            'video_date',
         ]
 
     def update(self, instance, validated_data):
@@ -154,6 +156,7 @@ class VideoListSerializer(BaseSerializer):
             'id',
             'title',
             'video_url',
+            'video_date',
 
             'course_content'
         ]

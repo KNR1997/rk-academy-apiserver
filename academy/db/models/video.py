@@ -8,6 +8,7 @@ from .base import BaseModel
 class Video(BaseModel):
     title = models.CharField(max_length=255)
     video_url = models.URLField()
+    video_date = models.DateField(null=True, blank=True)
 
     course_content = models.ForeignKey(
         'CourseContent',

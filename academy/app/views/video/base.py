@@ -106,13 +106,13 @@ class VideoDetailAPIEndpoint(BaseAPIView):
         return Response(VideoLiteSerializer(video).data, status=status.HTTP_200_OK)
 
 
-@allow_permission([ROLE.ADMIN])
-def delete(self, request, pk):
-    """Delete video"""
-    logger.info("video_delete_started", video_id=pk, requested_by=request.user.id, role=request.user.role)
+    @allow_permission([ROLE.ADMIN])
+    def delete(self, request, pk):
+        """Delete video"""
+        logger.info("video_delete_started", video_id=pk, requested_by=request.user.id, role=request.user.role)
 
-    video = self.get_queryset().filter(pk=pk)
-    video.delete()
+        video = self.get_queryset().filter(pk=pk)
+        video.delete()
 
-    logger.info("video_deleted", video_id=pk, requested_by=request.user.id, role=request.user.role)
-    return Response(status=status.HTTP_204_NO_CONTENT)
+        logger.info("video_deleted", video_id=pk, requested_by=request.user.id, role=request.user.role)
+        return Response(status=status.HTTP_204_NO_CONTENT)

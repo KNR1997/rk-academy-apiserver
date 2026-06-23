@@ -12,6 +12,8 @@ from .subject import urlpatterns as subject_urls
 from .teacher import urlpatterns as teacher_urls
 from .user import urlpatterns as user_urls
 from .video import urlpatterns as video_urls
+from .invoice import urlpatterns as invoice_urls
+from .payment import urlpatterns as payment_urls
 
 urlpatterns = [
     *academic_year_urls,
@@ -28,4 +30,6 @@ urlpatterns = [
     *conversation_urls,
     *message_urls,
     *video_urls,
+    *invoice_urls,
+    *payment_urls,
 ]

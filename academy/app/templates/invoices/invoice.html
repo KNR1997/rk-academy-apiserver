@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 12px;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .container {
+            max-width: 100%;
+        }
+        
+        /* Header Section */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .company-info {
+            flex: 1;
+        }
+        
+        .company-logo {
+            max-width: 200px;
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 5px;
+        }
+        
+        .company-address {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        
+        .company-contact {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .company-contact span {
+            display: block;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        .invoice-title {
+            text-align: right;
+            flex: 0 0 auto;
+        }
+        
+        .invoice-title h1 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin: 0;
+            font-weight: bold;
+        }
+        
+        .invoice-title .invoice-number {
+            font-size: 18px;
+            color: #3498db;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        /* Invoice Details */
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .detail-item {
+            flex: 1;
+        }
+        
+        .detail-item .label {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .detail-item .value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+        
+        /* Patient/Client Info */
+        .client-info {
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .client-info .label {
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .client-info .value {
+            font-size: 16px;
+            color: #2c3e50;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+        
+        /* Table */
+        .table-container {
+            margin-bottom: 25px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        table th {
+            background-color: #2c3e50;
+            color: white;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        table tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        /* Totals */
+        .totals {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .totals-table {
+            width: 300px;
+        }
+        
+        .totals-table td {
+            padding: 8px 12px;
+            border: none;
+        }
+        
+        .totals-table .total-label {
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .totals-table .total-value {
+            text-align: right;
+            font-weight: 500;
+        }
+        
+        .totals-table .grand-total {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+            border-top: 2px solid #2c3e50;
+            padding-top: 10px;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            font-size: 10px;
+            color: #888;
+            text-align: center;
+        }
+        
+        .footer .terms {
+            margin-top: 10px;
+            font-size: 9px;
+            color: #999;
+        }
+        
+        /* Notes Section */
+        .notes {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            font-size: 11px;
+            color: #555;
+        }
+        
+        .notes .label {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="company-info">
+                {% if company.logo %}
+                <img src="{{ company.logo }}" alt="{{ company.name }}" class="company-logo">
+                {% else %}
+                <div class="company-name">{{ company.name|default:"RK-Academy" }}</div>
+                {% endif %}
+                <div class="company-address">{{ company.address|default:"282/2, Pipe Road, Koswatta, Battaramulla." }}</div>
+                <div class="company-contact">
+                    <span>T: {{ company.phone|default:"0761817775" }}</span>
+                    <span>L: {{ company.landline|default:"+94 76 18 177 75" }}</span>
+                    <span>W: {{ company.website|default:"www.rukshanict.lk/" }}</span>
+                    <span>E: {{ company.email|default:"online@beyondhealth.lk" }}</span>
+                </div>
+            </div>
+            <div class="invoice-title">
+                <h1>{% if invoice.is_quotation %}QUOTATION{% else %}INVOICE{% endif %}</h1>
+                <div class="invoice-number">{% if invoice.is_quotation %}PRO-FORMA #{{ invoice.invoice_number }}{% else %}#{{ invoice.invoice_number }}{% endif %}</div>
+            </div>
+        </div>
+
+        <!-- Invoice Details -->
+        <div class="invoice-details">
+            <div class="detail-item">
+                <div class="label">Date Issued</div>
+                <div class="value">{{ invoice.issue_date|date:"M d, Y" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Valid Until</div>
+                <div class="value">{{ invoice.due_date|date:"M d, Y" }}</div>
+            </div>
+            <div class="detail-item">
+                <div class="label">Status</div>
+                <div class="value" style="color: {% if invoice.status == 'paid' %}green{% elif invoice.status == 'overdue' %}red{% else %}orange{% endif %};">
+                    {{ invoice.get_status_display|default:"Pending" }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Client/Patient Info -->
+        <div class="client-info">
+            <div class="label">{% if invoice.is_quotation %}Patient{% else %}Bill To{% endif %}</div>
+            <div class="value">
+                {% if invoice.enrollment and invoice.enrollment.student %}
+                    {{ invoice.enrollment.student.user.first_name }} {{ invoice.enrollment.student.user.last_name }}
+                {% elif invoice.client_name %}
+                    {{ invoice.client_name }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </div>
+            {% if invoice.enrollment and invoice.enrollment.student %}
+            <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                {% if invoice.enrollment.student.user.email %}
+                Email: {{ invoice.enrollment.student.user.email }}
+                {% endif %}
+                {% if invoice.enrollment.student.user.mobile_number %}
+                | Phone: {{ invoice.enrollment.student.user.mobile_number }}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Line Items Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>PRODUCT</th>
+                        <th style="width: 60px; text-align: center;">QTY</th>
+                        <th style="width: 80px; text-align: right;">PRICE</th>
+                        <th style="width: 70px; text-align: right;">DISC.</th>
+                        <th style="width: 90px; text-align: right;">TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice.line_items.all %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.description|default:item.charge|default:"-" }}</td>
+                        <td class="text-center">{{ item.quantity }}</td>
+                        <td class="text-right">{{ item.unit_price|floatformat:2 }}</td>
+                        <td class="text-right">{{ item.discount|default:"0.00"|floatformat:2 }}</td>
+                        <td class="text-right">{{ item.line_total|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center" style="padding: 20px; color: #999;">No items found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Totals -->
+        <div class="totals">
+            <table class="totals-table">
+                <tr>
+                    <td class="total-label">Subtotal:</td>
+                    <td class="total-value">{{ invoice.subtotal|floatformat:2 }}</td>
+                </tr>
+                {% if invoice.discount_amount > 0 %}
+                <tr>
+                    <td class="total-label">Discount:</td>
+                    <td class="total-value">-{{ invoice.discount_amount|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+                {% if invoice.tax_amount > 0 %}
+                <tr>
+                    <td class="total-label">Tax:</td>
+                    <td class="total-value">{{ invoice.tax_amount|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td class="total-label" style="font-weight: bold; font-size: 16px;">Order Total:</td>
+                    <td class="total-value grand-total">{{ invoice.total_amount|floatformat:2 }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Notes -->
+        {% if invoice.notes %}
+        <div class="notes">
+            <span class="label">Notes:</span>
+            {{ invoice.notes }}
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="footer">
+            <div>Thank you for your business!</div>
+            <div class="terms">
+                Payment is due within 30 days. Please include invoice number with payment.
+                <br>
+                {% if invoice.is_quotation %}
+                This is a pro-forma quotation and not a tax invoice.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

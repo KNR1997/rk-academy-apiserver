@@ -13,3 +13,6 @@ from .subject import Subject
 from .teacher import Teacher
 from .user import User
 from .video import Video
+from .enrollment_charge import EnrollmentCharge
+from .invoice import Invoice, InvoiceLineItem
+from .payment import Payment

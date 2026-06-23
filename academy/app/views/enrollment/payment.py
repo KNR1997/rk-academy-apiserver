@@ -5,7 +5,9 @@ from rest_framework.response import Response
 
 # Module imports
 from academy.app.permissions.base import allow_permission, ROLE
-from academy.app.serializers.enrollment import EnrollmentPaymentListSerializer, EnrollmentPaymentCreateSerializer
+from academy.app.serializers.enrollment import EnrollmentPaymentListSerializer
+from academy.app.serializers.enrollment_payment import InvoiceCreateSerializer
+from academy.app.serializers.invoice import InvoiceListSerializer
 from academy.app.views.base import BaseViewSet
 from academy.db.models import EnrollmentPayment
 
@@ -37,12 +39,12 @@ class EnrollmentPaymentViewSet(BaseViewSet):
     def create(self, request, *args, **kwargs):
         logger.info("enrollment_payment_create_started", requested_by=request.user.id)
 
-        serializer = EnrollmentPaymentCreateSerializer(data=request.data)
+        serializer = InvoiceCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        invoice = serializer.save()
 
         logger.info("enrollment_payment_created", created_by=request.user.id)
-        return Response(None, status=status.HTTP_201_CREATED)
+        return Response(InvoiceListSerializer(invoice).data, status=status.HTTP_201_CREATED)
 
     @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def list(self, request, *args, **kwargs):

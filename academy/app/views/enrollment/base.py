@@ -68,8 +68,14 @@ class EnrollmentViewSet(BaseViewSet):
 
         queryset = self.filter_queryset(
             Enrollment.objects
-            .select_related("student", "course_offering")
-            .prefetch_related("enrollment_payments")
+            .select_related(
+                "student",
+                "student__current_grade",
+                "student__current_academic_year",
+                "student__user",
+                "course_offering"
+            )
+            .prefetch_related("charges")
         )
 
         page = self.paginate_queryset(queryset)

@@ -23,13 +23,22 @@ class InvoiceViewSet(BaseViewSet):
     serializer_class = InvoiceListSerializer
 
     search_fields = []
-    ordering_fields = []
+    ordering_fields = ['created_at']
 
     def get_queryset(self):
         queryset = (
             self.filter_queryset(super().get_queryset())
+            .select_related(
+                'enrollment',
+                'enrollment__student',
+                "enrollment__student__user",
+                'enrollment__course_offering',
+                "enrollment__course_offering__grade_level",
+                "enrollment__course_offering__course",
+                "enrollment__course_offering__course__subject",
+            )
         )
-        logger.info("student_queryset_loaded")
+        logger.info("invoice_queryset_loaded")
         return queryset
 
     @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])

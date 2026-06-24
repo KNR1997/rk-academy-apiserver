@@ -5,9 +5,10 @@ from django.db.models import Q
 # Module imports
 from academy.app.permissions.base import allow_permission, ROLE
 from academy.app.serializers.course_content import VideoListSerializer
-from academy.app.serializers.enrollment import EnrollmentListSerializer, EnrollmentPaymentListSerializer
+from academy.app.serializers.enrollment import EnrollmentListSerializer
+from academy.app.serializers.enrollment_charge import EnrollmentChargeListSerializer
 from academy.app.views.base import BaseViewSet
-from academy.db.models import Enrollment, Student, Video, EnrollmentPayment
+from academy.db.models import Enrollment, Student, Video, EnrollmentCharge
 
 logger = structlog.getLogger(__name__)
 
@@ -27,11 +28,14 @@ class StudentMeEnrollmentViewSet(BaseViewSet):
             self.filter_queryset(
                 super().get_queryset()).filter(
                     student=student,
-                    is_active=True
             )
         )
+
+        # Filter active enrollments in Python
+        active_enrollments = [e for e in queryset if e.is_active]
+
         logger.info("student_me_enrollment_queryset_loaded")
-        return queryset
+        return active_enrollments
 
     @allow_permission([ROLE.STUDENT])
     def list(self, request, *args, **kwargs):
@@ -57,7 +61,7 @@ class StudentMeEnrollmentVideosViewSet(BaseViewSet):
         enrollment_id = self.kwargs.get('pk')
         enrollment = Enrollment.objects.get(pk=enrollment_id)
 
-        payments = enrollment.enrollment_payments.all()
+        payments = enrollment.charges.all()
 
         if not payments.exists():
             return Video.objects.none()
@@ -66,8 +70,8 @@ class StudentMeEnrollmentVideosViewSet(BaseViewSet):
 
         for payment in payments:
             query |= Q(
-                course_content__month=payment.payment_month,
-                course_content__year=payment.payment_year
+                course_content__month=payment.billing_month,
+                course_content__year=payment.billing_year
             )
 
         return Video.objects.filter(
@@ -82,8 +86,8 @@ class StudentMeEnrollmentVideosViewSet(BaseViewSet):
 
 
 class StudentMeEnrollmentPaymentViewSet(BaseViewSet):
-    model = EnrollmentPayment
-    serializer_class = EnrollmentPaymentListSerializer
+    model = EnrollmentCharge
+    serializer_class = EnrollmentChargeListSerializer
 
     search_fields = []
     ordering_fields = ['created_at']

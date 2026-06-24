@@ -40,21 +40,20 @@ class InvoiceCreateSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
-
-        enrollment = Enrollment.objects.filter(
-            pk=attrs["enrollment_id"],
-            is_active=True
-        ).first()
-
-        if not enrollment:
+        try:
+            enrollment = Enrollment.objects.get(pk=attrs["enrollment_id"])
+        except Enrollment.DoesNotExist:
             raise ValidationError({
-                "enrollment": [
-                    "Enrollment does not exist or is inactive."
-                ]
+                "enrollment": ["Enrollment does not exist."]
             })
 
-        attrs["enrollment"] = enrollment
+        # Use the property method
+        # if not enrollment.is_active:  # This calls the @property method
+        #     raise ValidationError({
+        #         "enrollment": ["Enrollment is inactive."]
+        #     })
 
+        attrs["enrollment"] = enrollment
         return attrs
 
     @transaction.atomic

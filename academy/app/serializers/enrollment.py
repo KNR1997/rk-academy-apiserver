@@ -1,5 +1,5 @@
 import calendar
-from datetime import date
+from datetime import datetime
 
 from django.utils import timezone
 from django.db import transaction
@@ -46,10 +46,6 @@ class EnrollmentListSerializer(BaseSerializer):
         model = Enrollment
         fields = [
             'id',
-            'status',
-            'last_payment_month',
-            'last_payment_year',
-            'is_active',
             'student',
             'course_offering',
         ]
@@ -75,6 +71,7 @@ class EnrollmentWithPaymentMonthsSerializer(BaseSerializer):
     student = StudentListSerializer()
     course_offering = CourseOfferingListSerializer()
     months = serializers.SerializerMethodField()
+    is_active = serializers.SerializerMethodField()
 
     class Meta:
         model = Enrollment
@@ -88,39 +85,138 @@ class EnrollmentWithPaymentMonthsSerializer(BaseSerializer):
 
     def get_months(self, enrollment):
         """
+        Returns a dictionary of months with payment status and details.
+        
         Returns:
         {
-          jan: { paid: True, amount: 120 },
-          feb: { paid: False },
-          ...
+            'jan': { 'paid': True, 'amount': 120.00, 'status': 'paid' },
+            'feb': { 'paid': False, 'amount': None, 'status': None },
+            ...
         }
         """
-
-        # Fetch payments once (important for performance)
-        payments = enrollment.enrollment_payments.all()
-
-        # Map payments by month number (1–12)
-        payment_map = {
-            p.payment_month: p
-            for p in payments
-            # if p.payment_year == enrollment.last_payment_year
-            # if p.payment_year == date.
+        # Get current year - we typically only care about current year's payments
+        # But you might want to make this configurable or handle multiple years
+        current_year = datetime.now().year
+        
+        # Fetch all charges for this enrollment in the current year
+        # You might want to include previous years if your business logic requires it
+        charges = enrollment.charges.filter(
+            billing_year=current_year
+        ).order_by('billing_month')
+        
+        # Create a map of month -> charge for quick lookup
+        # We consider a charge as "paid" only if status is 'paid'
+        # You might want to include 'invoiced' or other statuses based on your logic
+        charge_map = {
+            charge.billing_month: charge 
+            for charge in charges
+            if charge.billing_month is not None  # Handle null values
         }
-
+        
         months = {}
-
+        
         for month in range(1, 13):
             month_key = calendar.month_abbr[month].lower()  # jan, feb, ...
-
-            payment = payment_map.get(month)
-
-            months[month_key] = {
-                "paid": payment is not None,
-                "amount": payment.amount if payment else None,
-                "payment_date": payment.payment_date if payment else None,
-            }
-
+            charge = charge_map.get(month)
+            
+            if charge:
+                is_paid = charge.status == 'paid'
+                months[month_key] = {
+                    "paid": is_paid,
+                    "amount": str(charge.amount) if charge.amount else None,
+                    "status": charge.status,
+                    "description": charge.description,
+                    "due_date": charge.due_date,
+                }
+            else:
+                months[month_key] = {
+                    "paid": False,
+                    "amount": None,
+                    "status": None,
+                    "description": None,
+                    "due_date": None,
+                }
+        
         return months
+
+    def get_is_active(self, enrollment):
+        """
+        Determine if enrollment is active based on payment history.
+        """
+        # Option 1: Use the existing is_active field (if you keep it)
+        # return enrollment.is_active
+        
+        # Option 2: Calculate on the fly (recommended)
+        current_year = datetime.now().year
+        current_month = datetime.now().month
+        
+        # Find the most recent paid charge
+        last_paid = enrollment.charges.filter(
+            status='paid'
+        ).order_by('-billing_year', '-billing_month').first()
+        
+        if not last_paid:
+            return False
+        
+        # Check if the last payment covers the current month
+        # Adjust this logic based on your business rules
+        if last_paid.billing_year > current_year:
+            return True
+        elif last_paid.billing_year == current_year:
+            return last_paid.billing_month >= current_month
+        else:
+            return False
+
+# class EnrollmentWithPaymentMonthsSerializer(BaseSerializer):
+#     student = StudentListSerializer()
+#     course_offering = CourseOfferingListSerializer()
+#     months = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = Enrollment
+#         fields = [
+#             'id',
+#             'course_offering',
+#             'student',
+#             'months',
+#             'is_active',
+#         ]
+
+#     def get_months(self, enrollment):
+#         """
+#         Returns:
+#         {
+#           jan: { paid: True, amount: 120 },
+#           feb: { paid: False },
+#           ...
+#         }
+#         """
+
+#         # Fetch payments once (important for performance)
+#         payments = enrollment.enrollment_payments.all()
+
+#         # Map payments by month number (1–12)
+#         payment_map = {
+#             p.payment_month: p
+#             for p in payments
+#             # if p.payment_year == enrollment.last_payment_year
+#             # if p.payment_year == date.
+#         }
+
+#         months = {}
+
+#         for month in range(1, 13):
+#             month_key = calendar.month_abbr[month].lower()  # jan, feb, ...
+
+#             payment = payment_map.get(month)
+
+#             months[month_key] = {
+#                 "paid": payment is not None,
+#                 "amount": payment.amount if payment else None,
+#                 "payment_date": payment.payment_date if payment else None,
+#             }
+
+#         return months
 
 
 class EnrollmentPaymentSerializer(BaseSerializer):

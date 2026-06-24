@@ -1,10 +1,27 @@
 from rest_framework import serializers
 
-from academy.db.models import Invoice, InvoiceLineItem
+from academy.db.models import Invoice, InvoiceLineItem, Enrollment
 from academy.app.serializers.payment import PaymentListSerializer
+from academy.app.serializers.student import StudentSimpleSerializer
+from academy.app.serializers.course import CourseOfferingLiteSerializer
+
+
+class InvoiceEnrollmentDetailsSerializer(serializers.ModelSerializer):
+    student = StudentSimpleSerializer()
+    course_offering = CourseOfferingLiteSerializer()
+
+    class Meta:
+        model = Enrollment
+        fields = [
+            "id",
+            "student",
+            "course_offering",
+        ]
 
 
 class InvoiceListSerializer(serializers.ModelSerializer):
+    enrollment = InvoiceEnrollmentDetailsSerializer()
+
     class Meta:
         model = Invoice
         fields = [
@@ -13,6 +30,7 @@ class InvoiceListSerializer(serializers.ModelSerializer):
             "issue_date",
             "subtotal",
             "status",
+            "enrollment",
         ]
 
 

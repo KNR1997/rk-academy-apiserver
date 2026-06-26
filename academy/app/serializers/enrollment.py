@@ -20,8 +20,8 @@ class EnrollmentSerializer(BaseSerializer):
         read_only_fields = ['status']
 
     def create(self, validated_data):
-        validated_data['status'] = EnrollmentStatusType.LOCKED
-        validated_data['is_active'] = True
+        # validated_data['status'] = EnrollmentStatusType.LOCKED
+        # validated_data['is_active'] = True
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
@@ -41,6 +41,7 @@ class EnrollmentSerializer(BaseSerializer):
 class EnrollmentListSerializer(BaseSerializer):
     student = StudentListSerializer()
     course_offering = CourseOfferingListSerializer()
+    is_active = serializers.SerializerMethodField()
 
     class Meta:
         model = Enrollment
@@ -48,7 +49,36 @@ class EnrollmentListSerializer(BaseSerializer):
             'id',
             'student',
             'course_offering',
+            'is_active',
         ]
+
+    def get_is_active(self, enrollment):
+        """
+        Determine if enrollment is active based on payment history.
+        """
+        # Option 1: Use the existing is_active field (if you keep it)
+        # return enrollment.is_active
+
+        # Option 2: Calculate on the fly (recommended)
+        current_year = datetime.now().year
+        current_month = datetime.now().month
+
+        # Find the most recent paid charge
+        last_paid = enrollment.charges.filter(
+            status='paid'
+        ).order_by('-billing_year', '-billing_month').first()
+
+        if not last_paid:
+            return False
+
+        # Check if the last payment covers the current month
+        # Adjust this logic based on your business rules
+        if last_paid.billing_year > current_year:
+            return True
+        elif last_paid.billing_year == current_year:
+            return last_paid.billing_month >= current_month
+        else:
+            return False
 
 
 class CourseOfferingEnrollmentListSerializer(BaseSerializer):
@@ -86,7 +116,7 @@ class EnrollmentWithPaymentMonthsSerializer(BaseSerializer):
     def get_months(self, enrollment):
         """
         Returns a dictionary of months with payment status and details.
-        
+
         Returns:
         {
             'jan': { 'paid': True, 'amount': 120.00, 'status': 'paid' },
@@ -97,28 +127,28 @@ class EnrollmentWithPaymentMonthsSerializer(BaseSerializer):
         # Get current year - we typically only care about current year's payments
         # But you might want to make this configurable or handle multiple years
         current_year = datetime.now().year
-        
+
         # Fetch all charges for this enrollment in the current year
         # You might want to include previous years if your business logic requires it
         charges = enrollment.charges.filter(
             billing_year=current_year
         ).order_by('billing_month')
-        
+
         # Create a map of month -> charge for quick lookup
         # We consider a charge as "paid" only if status is 'paid'
         # You might want to include 'invoiced' or other statuses based on your logic
         charge_map = {
-            charge.billing_month: charge 
+            charge.billing_month: charge
             for charge in charges
             if charge.billing_month is not None  # Handle null values
         }
-        
+
         months = {}
-        
+
         for month in range(1, 13):
             month_key = calendar.month_abbr[month].lower()  # jan, feb, ...
             charge = charge_map.get(month)
-            
+
             if charge:
                 is_paid = charge.status == 'paid'
                 months[month_key] = {
@@ -136,7 +166,7 @@ class EnrollmentWithPaymentMonthsSerializer(BaseSerializer):
                     "description": None,
                     "due_date": None,
                 }
-        
+
         return months
 
     def get_is_active(self, enrollment):
@@ -145,19 +175,19 @@ class EnrollmentWithPaymentMonthsSerializer(BaseSerializer):
         """
         # Option 1: Use the existing is_active field (if you keep it)
         # return enrollment.is_active
-        
+
         # Option 2: Calculate on the fly (recommended)
         current_year = datetime.now().year
         current_month = datetime.now().month
-        
+
         # Find the most recent paid charge
         last_paid = enrollment.charges.filter(
             status='paid'
         ).order_by('-billing_year', '-billing_month').first()
-        
+
         if not last_paid:
             return False
-        
+
         # Check if the last payment covers the current month
         # Adjust this logic based on your business rules
         if last_paid.billing_year > current_year:

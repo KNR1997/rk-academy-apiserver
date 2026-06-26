@@ -14,5 +14,6 @@ class EnrollmentChargeListSerializer(BaseSerializer):
             'billing_month',
             'billing_year',
             'status',
+            'created_at',
             'enrollment'
         ]

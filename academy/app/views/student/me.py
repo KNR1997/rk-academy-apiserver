@@ -35,7 +35,7 @@ class StudentMeEnrollmentViewSet(BaseViewSet):
         active_enrollments = [e for e in queryset if e.is_active]
 
         logger.info("student_me_enrollment_queryset_loaded")
-        return active_enrollments
+        return queryset
 
     @allow_permission([ROLE.STUDENT])
     def list(self, request, *args, **kwargs):
@@ -61,17 +61,17 @@ class StudentMeEnrollmentVideosViewSet(BaseViewSet):
         enrollment_id = self.kwargs.get('pk')
         enrollment = Enrollment.objects.get(pk=enrollment_id)
 
-        payments = enrollment.charges.all()
+        charges = enrollment.charges.all()
 
-        if not payments.exists():
+        if not charges.exists():
             return Video.objects.none()
 
         query = Q()
 
-        for payment in payments:
+        for charge in charges:
             query |= Q(
-                course_content__month=payment.billing_month,
-                course_content__year=payment.billing_year
+                course_content__month=charge.billing_month,
+                course_content__year=charge.billing_year
             )
 
         return Video.objects.filter(

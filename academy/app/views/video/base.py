@@ -23,6 +23,7 @@ class VideoListCreateAPIEndpoint(BaseViewSet):
 
     search_fields = ['title']
     filterset_fields = []
+    ordering_fields = ['created_at']
 
     def get_queryset(self):
         return (

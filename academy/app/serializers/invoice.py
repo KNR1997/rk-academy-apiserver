@@ -30,6 +30,7 @@ class InvoiceListSerializer(serializers.ModelSerializer):
             "issue_date",
             "subtotal",
             "status",
+            "created_at",
             "enrollment",
         ]
 

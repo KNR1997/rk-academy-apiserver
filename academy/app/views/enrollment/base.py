@@ -103,7 +103,7 @@ class EnrollmentViewSet(BaseViewSet):
             404: NOT_FOUND_RESPONSE,
         },
     )
-    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR, ROLE.STUDENT])
     def retrieve(self, request, *args, **kwargs):
         logger.info("enrollment_get_requested", enrollment_id=self.kwargs.get("pk"), requested_by=request.user.id,
                     role=request.user.role)

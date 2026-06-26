@@ -17,13 +17,13 @@ class InstituteAnalyticsDataEndpoint(BaseAPIView):
 
         student_count = Student.objects.all().count()
         enrollment_count = Enrollment.objects.all().count()
-        active_enrollment_count = Enrollment.objects.filter(is_active=True).count()
+        # active_enrollment_count = Enrollment.objects.filter(is_active=True).count()
 
         output = {
             "total_revenue": 0,
             "student_count": student_count,
             "enrollment_count": enrollment_count,
-            "active_enrollment_count": active_enrollment_count,
+            "active_enrollment_count": enrollment_count,
         }
 
         logger.info("institute_analytics_loaded", requested_by=request.user.id, role=request.user.role)

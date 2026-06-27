@@ -8,18 +8,17 @@ ENV PYTHONUNBUFFERED=1
 # Set the working directory in the container
 WORKDIR /app
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     libglib2.0-0 \
-    libgobject-2.0-0 \
     libcairo2 \
-    libpango1.0-0 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
     libgdk-pixbuf-2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
-
-# Set environment variable to help locate the libraries
-ENV LD_LIBRARY_PATH=/usr/lib:/usr/local/lib:/usr/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH
 
 # Install dependencies by copying requirements.txt first to leverage Docker layer caching
 COPY requirements.txt .

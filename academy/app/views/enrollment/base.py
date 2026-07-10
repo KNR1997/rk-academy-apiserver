@@ -33,7 +33,7 @@ class EnrollmentViewSet(BaseViewSet):
         "student__user__last_name",
         "course_offering__grade_level__name"
     ]
-    ordering_fields = ['is_active', 'created_at']
+    ordering_fields = ['created_at']
 
     def get_queryset(self):
         queryset = (

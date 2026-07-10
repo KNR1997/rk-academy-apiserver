@@ -19,6 +19,9 @@ class CourseOffering(BaseModel):
     course = models.ForeignKey(
         'db.Course', related_name="offerings", on_delete=models.SET_NULL, null=True
     )
+    subject = models.ForeignKey(
+        'db.Subject', related_name="offerings", on_delete=models.SET_NULL, null=True
+    )
 
     class Meta:
         db_table = "course_offering"

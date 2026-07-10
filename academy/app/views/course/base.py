@@ -27,7 +27,7 @@ class CourseViewSet(BaseViewSet):
     serializer_class = CourseResponseSerializer
 
     search_fields = ["name", "slug"]
-    ordering_fields = ['created_at']
+    ordering_fields = ['name', 'slug', 'created_at']
 
     lookup_field = "slug"
 

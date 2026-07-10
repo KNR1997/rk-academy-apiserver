@@ -49,7 +49,7 @@ class CourseUpdateSerializer(BaseSerializer):
 
 
 class CourseOfferingListSerializer(BaseSerializer):
-    course = CourseResponseSerializer()
+    subject = SubjectResponseSerializer()
     teacher = TeacherListSerializer()
     grade_level = GradeLevelListSerializer()
 
@@ -57,7 +57,7 @@ class CourseOfferingListSerializer(BaseSerializer):
         model = CourseOffering
         fields = [
             'id',
-            'course',
+            'subject',
             'teacher',
             'fee',
             'year',
@@ -84,15 +84,23 @@ class CourseOfferingSerializer(BaseSerializer):
         fields = '__all__'
 
     def update(self, instance, validated_data):
+        instance.subject = validated_data.get('subject', instance.subject)
         instance.fee = validated_data.get('fee', instance.fee)
-        instance.save(update_fields=['fee'])
+        instance.save(update_fields=['subject', 'fee'])
         return instance
 
 
 class CourseOfferingCreateSerializer(BaseSerializer):
     class Meta:
         model = CourseOffering
-        fields = ['course', 'teacher', 'grade_level', 'fee', 'year', 'batch']
+        fields = [
+            'subject', 
+            'teacher', 
+            'grade_level', 
+            'fee', 
+            'year', 
+            'batch'
+        ]
 
 
 class CourseOfferingLiteSerializer(BaseSerializer):

@@ -26,12 +26,12 @@ class CourseOfferingViewSet(BaseViewSet):
     serializer_class = CourseOfferingListSerializer
 
     search_fields = ["year", "grade_level__name"]
-    ordering_fields = ['course__name', 'batch', 'year', 'created_at']
+    ordering_fields = ['subject__name', 'batch', 'year', 'created_at']
 
     def get_queryset(self):
         queryset = (
             self.filter_queryset(super().get_queryset().select_related(
-                'course', 'teacher', 'grade_level'))
+                'subject', 'teacher', 'grade_level'))
         )
         logger.info("course_offering_queryset_loaded")
         return queryset
@@ -50,7 +50,7 @@ class CourseOfferingViewSet(BaseViewSet):
                     requested_by=request.user.id)
 
         course_offering = CourseOffering.objects.filter(
-            course=request.data.get("course"),
+            subject=request.data.get("subject"),
             grade_level=request.data.get("grade_level"),
             year=request.data.get("year"),
             batch=request.data.get("batch"),

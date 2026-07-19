@@ -26,7 +26,7 @@ class SubjectViewSet(BaseViewSet):
     serializer_class = SubjectResponseSerializer
 
     search_fields = ["name", "slug"]
-    filterset_fields = []
+    ordering_fields = ['created_at']
 
     lookup_field = "slug"
 

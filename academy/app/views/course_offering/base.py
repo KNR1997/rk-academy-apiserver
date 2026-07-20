@@ -106,7 +106,7 @@ class CourseOfferingViewSet(BaseViewSet):
             404: NOT_FOUND_RESPONSE,
         },
     )
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.STUDENT])
     def retrieve(self, request, *args, **kwargs):
         logger.info("course_offering_get_requested",
                     requested_by=request.user.id, role=request.user.role)

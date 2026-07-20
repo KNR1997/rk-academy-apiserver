@@ -5,7 +5,7 @@ from rest_framework.response import Response
 
 # Module imports
 from academy.app.permissions.base import allow_permission, ROLE
-from academy.app.serializers.course_content import VideoLiteSerializer
+from academy.app.serializers.course_content import VideoListSerializer
 from academy.app.views.base import BaseAPIView
 from academy.db.models import Student, Video
 
@@ -20,8 +20,14 @@ class StudentWatchVideoEndpoint(BaseAPIView):
         logger.info("student_watch_video_requested", student_id=student.id, video_id=self.kwargs.get("pk"),
                     requested_by=request.user.id)
 
-        video = Video.objects.get(pk=pk)
+        video = Video.objects.select_related(
+            'course_content',
+            'course_content__course_offering',
+            'course_content__course_offering__course',
+            'course_content__course_offering__grade_level',
+            'course_content__course_offering__course__subject'
+        ).get(pk=pk)
 
         logger.info("student_watch_video_loaded", student_id=student.id, video_id=self.kwargs.get("pk"),
                     requested_by=request.user.id)
-        return Response(VideoLiteSerializer(video).data, status=status.HTTP_200_OK)
+        return Response(VideoListSerializer(video).data, status=status.HTTP_200_OK)

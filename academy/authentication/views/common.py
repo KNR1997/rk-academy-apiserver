@@ -20,6 +20,7 @@ from academy.app.serializers.authentication import SignupSerializer, SigninSeria
 from academy.app.serializers.user import UserLiteSerializer
 from academy.app.views.base import BaseAPIView
 from academy.db.models import User
+from academy.app.permissions.base import allow_permission, ROLE
 
 logger = structlog.getLogger(__name__)
 
@@ -193,8 +194,8 @@ class ChangePasswordEndpoint(BaseAPIView):
         logger.info("change_password_completed", requested_by=request.user.id)
         return Response(status=status.HTTP_200_OK)
 
-
 class ChangeEmailEndpoint(BaseAPIView):
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def post(self, request):
         logger.info("change_email_started", requested_by=request.user.id)
 

@@ -130,7 +130,8 @@ class SettingsViewSet(APIView):
                 "defaultAi": "openai",
                 "maxShopDistance": None,
                 "siteLink": "https://pickbazar.redq.io",
-                "copyrightText": "Copyright \u00a9 REDQ. All rights reserved worldwide.",
+                # "copyrightText": "Copyright \u00a9 REDQ. All rights reserved worldwide.",
+                "copyrightText": "Copyright \u00a9 Rukshan Wijewickrama ICT Academy. All Rights Reserved",
                 "externalText": "REDQ",
                 "externalLink": "https://redq.io",
                 "smsEvent": {

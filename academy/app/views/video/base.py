@@ -22,18 +22,19 @@ class VideoListCreateAPIEndpoint(BaseViewSet):
     serializer_class = VideoListSerializer
 
     search_fields = ['title']
-    filterset_fields = []
+    filterset_fields = ['course_content__month', 'lesson', 'day']
     ordering_fields = ['title', 'created_at']
 
     def get_queryset(self):
         return (
             self.filter_queryset(super().get_queryset())
-            .select_related('course_content',
-                            'course_content__course_offering',
-                            'course_content__course_offering__course',
-                            'course_content__course_offering__grade_level',
-                            'course_content__course_offering__course__subject',
-                            )
+            .select_related(
+                'course_content',
+                'course_content__course_offering',
+                'course_content__course_offering__course',
+                'course_content__course_offering__grade_level',
+                'course_content__course_offering__course__subject',
+            )
         )
 
     @allow_permission([ROLE.ADMIN])

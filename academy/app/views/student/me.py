@@ -55,7 +55,8 @@ class StudentMeEnrollmentVideosViewSet(BaseViewSet):
     serializer_class = VideoListSerializer
 
     search_fields = ['title']
-    ordering_fields = []
+    filterset_fields = ['course_content__month', 'lesson', 'day']
+    ordering_fields = ['title', 'created_at']
 
     def get_queryset(self):
         enrollment_id = self.kwargs.get('pk')

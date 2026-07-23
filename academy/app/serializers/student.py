@@ -38,7 +38,8 @@ class StudentCreateSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(write_only=True, required=False)
     last_name = serializers.CharField(write_only=True, required=False)
     username = serializers.CharField(write_only=True, required=False)
-    email = serializers.EmailField(write_only=True, required=False, allow_null=True, allow_blank=True)
+    email = serializers.EmailField(
+        write_only=True, required=False, allow_null=True, allow_blank=True)
     password = serializers.CharField(write_only=True)
     parent_guardian_phone = serializers.CharField(write_only=True)
 
@@ -67,7 +68,8 @@ class StudentCreateSerializer(serializers.ModelSerializer):
         base = ''.join(c.lower() for c in base if c.isalnum() or c == '.')
 
         # Add random string to ensure uniqueness
-        random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+        random_suffix = ''.join(random.choices(
+            string.ascii_lowercase + string.digits, k=6))
 
         # Try different combinations until we find a unique one
         attempts = [
@@ -128,7 +130,8 @@ class StudentUpdateSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(write_only=True, required=False)
     last_name = serializers.CharField(write_only=True, required=False)
     username = serializers.CharField(write_only=True, required=False)
-    email = serializers.EmailField(write_only=True, required=False, allow_null=True, allow_blank=True)
+    email = serializers.EmailField(
+        write_only=True, required=False, allow_null=True, allow_blank=True)
     parent_guardian_phone = serializers.CharField(write_only=True)
 
     # password = serializers.CharField(write_only=True, required=False)
@@ -148,7 +151,8 @@ class StudentUpdateSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         user = self.instance.user
         if User.objects.filter(email=value).exclude(id=user.id).exists():
-            raise serializers.ValidationError("User with this email already exists.")
+            raise serializers.ValidationError(
+                "User with this email already exists.")
         return value
 
     def generate_dummy_email(self, first_name, last_name):
@@ -159,7 +163,8 @@ class StudentUpdateSerializer(serializers.ModelSerializer):
         base = ''.join(c.lower() for c in base if c.isalnum() or c == '.')
 
         # Add random string to ensure uniqueness
-        random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+        random_suffix = ''.join(random.choices(
+            string.ascii_lowercase + string.digits, k=6))
 
         # Try different combinations until we find a unique one
         attempts = [
@@ -260,4 +265,15 @@ class StudentSimpleSerializer(BaseSerializer):
 
             'user',
             'full_name',
+        ]
+
+
+class StudentMeDetailsSerializer(BaseSerializer):
+    class Meta:
+        model = Student
+        fields = [
+            'student_number',
+            'date_of_birth',
+            'gender',
+            'is_active',
         ]

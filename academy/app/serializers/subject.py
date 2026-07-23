@@ -18,3 +18,9 @@ class SubjectUpdateSerializer(BaseSerializer):
     class Meta:
         model = Subject
         fields = ['name', 'slug', 'code']
+
+
+class SubjectListSerializer(BaseSerializer):
+    class Meta:
+        model = Subject
+        fields = '__all__'

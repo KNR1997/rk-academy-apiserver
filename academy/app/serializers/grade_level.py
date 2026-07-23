@@ -7,3 +7,9 @@ class GradeLevelListSerializer(serializers.ModelSerializer):
     class Meta:
         model = GradeLevel
         fields = '__all__'
+
+
+class GradeLevelPageDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GradeLevel
+        fields = '__all__'

@@ -3,6 +3,7 @@ from rest_framework import serializers
 from academy.db.models import CourseContent, Video
 from .base import BaseSerializer
 from .course import CourseOfferingLiteSerializer
+from .course_offering import CourseOfferingPageDataSerializer
 
 
 class VideoCreateSerializer(BaseSerializer):
@@ -175,4 +176,18 @@ class VideoLiteSerializer(BaseSerializer):
             'id',
             'title',
             'video_url',
+        ]
+
+
+class CourseContentPageDataSerializer(BaseSerializer):
+    course_offering = CourseOfferingPageDataSerializer()
+
+    class Meta:
+        model = CourseContent
+        fields = [
+            'id',
+            'month',
+            'year',
+
+            'course_offering'
         ]

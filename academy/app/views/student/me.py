@@ -2,11 +2,17 @@
 import structlog
 from django.db.models import Q
 
+# Third-party imports
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+
 # Module imports
 from academy.app.permissions.base import allow_permission, ROLE
 from academy.app.serializers.course_content import VideoListSerializer
 from academy.app.serializers.enrollment import EnrollmentListSerializer
 from academy.app.serializers.enrollment_charge import EnrollmentChargeListSerializer
+from academy.app.serializers.student import StudentMeDetailsSerializer
 from academy.app.views.base import BaseViewSet
 from academy.db.models import Enrollment, Student, Video, EnrollmentCharge
 
@@ -111,3 +117,15 @@ class StudentMeEnrollmentPaymentViewSet(BaseViewSet):
         logger.info("student_me_enrollment_payment_list_requested",
                     requested_by=request.user.id, role=request.user.role)
         return super().list(request, *args, **kwargs)
+
+
+class StudentMeDetailsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @allow_permission([ROLE.STUDENT])
+    def get(self, request):
+        user = self.request.user
+        student = Student.objects.get(user=user)
+
+        serializer = StudentMeDetailsSerializer(student)
+        return Response(serializer.data)

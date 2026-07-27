@@ -17,3 +17,17 @@ class EnrollmentChargeListSerializer(BaseSerializer):
             'created_at',
             'enrollment'
         ]
+
+
+class EnrollmentChargeSimpleSerializer(BaseSerializer):
+
+    class Meta:
+        model = EnrollmentCharge
+        fields = [
+            'id',
+            'amount',
+            'billing_month',
+            'billing_year',
+            'status',
+            'created_at',
+        ]

@@ -3,11 +3,11 @@ from decimal import Decimal
 
 # Django imports
 from django.db import transaction
+from django.db.models import Q
 
 # Third party imports
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework import serializers
 
 # Module imports
 from academy.db.models import Invoice, EnrollmentCharge, Enrollment, InvoiceLineItem
@@ -47,14 +47,60 @@ class InvoiceCreateSerializer(serializers.Serializer):
                 "enrollment": ["Enrollment does not exist."]
             })
 
-        # Use the property method
-        # if not enrollment.is_active:  # This calls the @property method
-        #     raise ValidationError({
-        #         "enrollment": ["Enrollment is inactive."]
-        #     })
-
         attrs["enrollment"] = enrollment
+
+        # Validate that no charges are already paid
+        self._validate_no_paid_charges(enrollment, attrs["charges"])
+
         return attrs
+
+    def _validate_no_paid_charges(self, enrollment, charges_data):
+        """
+        Check if any of the provided charges already have a paid EnrollmentCharge
+        for the same enrollment.
+        """
+        errors = {}
+        
+        for index, charge_data in enumerate(charges_data):
+            # Build filter conditions for existing charges
+            filter_conditions = Q(
+                enrollment=enrollment,
+                status="paid",
+                description=charge_data["description"],
+                amount=charge_data["amount"]
+            )
+            
+            # Add billing month and year to filter if provided
+            if charge_data.get("billing_month"):
+                filter_conditions &= Q(billing_month=charge_data["billing_month"])
+            if charge_data.get("billing_year"):
+                filter_conditions &= Q(billing_year=charge_data["billing_year"])
+            
+            # Check if a paid charge already exists
+            existing_paid_charge = EnrollmentCharge.objects.filter(
+                filter_conditions
+            ).exists()
+            
+            if existing_paid_charge:
+                # Create error at the charges.index level
+                # You can choose which field to attach the error to
+                
+                # Option 1: Attach to billing_month field
+                if charge_data.get("billing_month") or charge_data.get("billing_year"):
+                    errors[f"charges.{index}.billing_month"] = [
+                        f"Paid EnrollmentCharge already exists for this month "
+                        f"(Description: {charge_data['description']}, "
+                        f"Amount: {charge_data['amount']})"
+                    ]
+                else:
+                    # Option 2: If no billing month/year, attach to description or fee
+                    errors[f"charges.{index}.fee"] = [
+                        f"Paid EnrollmentCharge already exists "
+                        f"(Description: {charge_data['description']})"
+                    ]
+        
+        if errors:
+            raise ValidationError(errors)
 
     @transaction.atomic
     def create(self, validated_data):

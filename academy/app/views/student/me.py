@@ -3,6 +3,7 @@ import structlog
 from django.db.models import Q
 
 # Third-party imports
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -11,10 +12,11 @@ from rest_framework.permissions import IsAuthenticated
 from academy.app.permissions.base import allow_permission, ROLE
 from academy.app.serializers.course_content import VideoListSerializer
 from academy.app.serializers.enrollment import EnrollmentListSerializer
-from academy.app.serializers.enrollment_charge import EnrollmentChargeListSerializer
+from academy.app.serializers.enrollment_charge import EnrollmentChargeSimpleSerializer
 from academy.app.serializers.student import StudentMeDetailsSerializer
+from academy.app.serializers.payment import PaymentListSerializer
 from academy.app.views.base import BaseViewSet
-from academy.db.models import Enrollment, Student, Video, EnrollmentCharge
+from academy.db.models import Enrollment, Student, Video, EnrollmentCharge, Payment
 
 logger = structlog.getLogger(__name__)
 
@@ -92,30 +94,23 @@ class StudentMeEnrollmentVideosViewSet(BaseViewSet):
         return super().list(request, *args, **kwargs)
 
 
-class StudentMeEnrollmentPaymentViewSet(BaseViewSet):
+class StudentMeEnrollmentChargesViewSet(BaseViewSet):
     model = EnrollmentCharge
-    serializer_class = EnrollmentChargeListSerializer
+    serializer_class = EnrollmentChargeSimpleSerializer
 
     search_fields = []
     ordering_fields = ['created_at']
 
     def get_queryset(self):
-        user = self.request.user
-        student = Student.objects.get(user=user)
+        enrollment_id = self.kwargs.get('pk')
+        enrollment = Enrollment.objects.get(pk=enrollment_id)
 
-        queryset = (
-            self.filter_queryset(
-                super().get_queryset()).filter(
-                    enrollment__student=student,
-            )
+        return EnrollmentCharge.objects.filter(
+            enrollment=enrollment,
         )
-        logger.info("student_me_enrollment_payment_queryset_loaded")
-        return queryset
 
     @allow_permission([ROLE.STUDENT])
     def list(self, request, *args, **kwargs):
-        logger.info("student_me_enrollment_payment_list_requested",
-                    requested_by=request.user.id, role=request.user.role)
         return super().list(request, *args, **kwargs)
 
 
@@ -129,3 +124,41 @@ class StudentMeDetailsView(APIView):
 
         serializer = StudentMeDetailsSerializer(student)
         return Response(serializer.data)
+
+
+class StudentMePaymentViewSet(BaseViewSet):
+    model = Payment
+    serializer_class = PaymentListSerializer
+
+    search_fields = []
+    ordering_fields = ['created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+        # Get the student object
+        try:
+            student = Student.objects.get(user=user)
+        except Student.DoesNotExist:
+            logger.warning("student_not_found_for_user", user_id=user.id)
+            return Payment.objects.none()
+
+        # Query Payments through Enrollment -> Invoice -> Payment
+        queryset = (
+            self.filter_queryset(
+                super().get_queryset()).filter(
+                    # Traverse through invoice to enrollment to student
+                    invoice__enrollment__student=student,
+            )
+            .prefetch_related('invoice__enrollment__course_offering')
+            .order_by('-created_at')  # Most recent payments first
+        )
+        logger.info("student_me_payments_queryset_loaded",
+                    student_id=student.id,
+                    count=queryset.count())
+        return queryset
+
+    @allow_permission([ROLE.STUDENT])
+    def list(self, request, *args, **kwargs):
+        logger.info("student_me_payments_list_requested",
+                    requested_by=request.user.id, role=request.user.role)
+        return super().list(request, *args, **kwargs)

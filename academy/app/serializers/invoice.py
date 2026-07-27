@@ -49,6 +49,7 @@ class InvoiceLineItemSerializer(serializers.ModelSerializer):
 
 
 class InvoiceDetailsSerializer(serializers.ModelSerializer):
+    enrollment = InvoiceEnrollmentDetailsSerializer()
     payment = PaymentListSerializer()
     line_items = InvoiceLineItemSerializer(many=True)
 
@@ -66,6 +67,7 @@ class InvoiceDetailsSerializer(serializers.ModelSerializer):
             "notes",
             "status",
 
+            "enrollment",
             "payment",
             "line_items"
         ]

@@ -21,7 +21,8 @@ class EnrollmentPaymentViewSet(BaseViewSet):
 
     search_fields = [
         "enrollment__student__user__first_name",
-        "enrollment__student__user__last_name"
+        "enrollment__student__user__last_name",
+        "enrollment__student__student_number"
     ]
     ordering_fields = [
         'enrollment__student__user__first_name',

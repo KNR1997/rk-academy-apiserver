@@ -22,7 +22,7 @@ class InvoiceViewSet(BaseViewSet):
     model = Invoice
     serializer_class = InvoiceListSerializer
 
-    search_fields = []
+    search_fields = ['invoice_number']
     ordering_fields = ['total', 'created_at']
 
     def get_queryset(self):

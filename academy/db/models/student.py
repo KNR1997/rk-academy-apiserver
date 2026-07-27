@@ -9,6 +9,13 @@ class Student(BaseModel):
     user = models.OneToOneField('db.User', on_delete=models.CASCADE)
     exam_year = models.IntegerField()
     student_number = models.CharField(max_length=20, unique=True)
+    # School information
+    school = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text="School name where the student is currently enrolled"
+    )
     # Current academic information
     current_grade = models.ForeignKey(
         'db.GradeLevel', on_delete=models.PROTECT, related_name='current_students'

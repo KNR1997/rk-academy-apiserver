@@ -22,6 +22,7 @@ class StudentListSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'student_number',
+            'school',
             'exam_year',
             'date_of_birth',
             'gender',
@@ -259,6 +260,7 @@ class StudentSimpleSerializer(BaseSerializer):
         fields = [
             'id',
             'student_number',
+            'parent_guardian_phone',
             'date_of_birth',
             'gender',
             'is_active',

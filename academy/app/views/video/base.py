@@ -38,13 +38,13 @@ class VideoListCreateAPIEndpoint(BaseViewSet):
             )
         )
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def list(self, request, *args, **kwargs):
         logger.info("video_list_requested",
                     requested_by=request.user.id, role=request.user.role)
         return super().list(request, *args, **kwargs)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def create(self, request, *args, **kwargs):
         logger.info("video_create_started", requested_by=request.user.id)
 
@@ -70,7 +70,7 @@ class VideoDetailAPIEndpoint(BaseAPIView):
     def get_queryset(self):
         return Video.objects.all()
 
-    @allow_permission([ROLE.ADMIN, ROLE.STUDENT])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR, ROLE.STUDENT])
     def get(self, request, *args, pk):
         """Retrieve video
 
@@ -93,7 +93,7 @@ class VideoDetailAPIEndpoint(BaseAPIView):
                     requested_by=request.user.id, role=request.user.role)
         return Response(VideoPageDataSerializer(video).data, status=status.HTTP_200_OK)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def patch(self, request, pk):
         """Update video"""
         logger.info("video_update_started", video_id=pk,
@@ -116,7 +116,7 @@ class VideoDetailAPIEndpoint(BaseAPIView):
                     requested_by=request.user.id, role=request.user.role)
         return Response(VideoLiteSerializer(video).data, status=status.HTTP_200_OK)
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def delete(self, request, pk):
         """Delete video"""
         logger.info("video_delete_started", video_id=pk,

@@ -36,7 +36,7 @@ class EnrollmentPaymentViewSet(BaseViewSet):
         logger.info("enrollment_payment_queryset_loaded")
         return queryset
 
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def create(self, request, *args, **kwargs):
         logger.info("enrollment_payment_create_started", requested_by=request.user.id)
 

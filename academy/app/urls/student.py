@@ -1,6 +1,6 @@
 from django.urls import path
 
-from academy.app.views.student.base import StudentViewSet, StudentEnrollmentsEndpoint
+from academy.app.views.student.base import StudentViewSet, StudentEnrollmentsEndpoint, ResetStudentPasswordEndpoint
 from academy.app.views.student.me import StudentMeEnrollmentViewSet, StudentMeEnrollmentVideosViewSet, StudentMeEnrollmentChargesViewSet, StudentMeDetailsView
 from academy.app.views.student.video import StudentWatchVideoEndpoint
 
@@ -55,4 +55,9 @@ urlpatterns = [
 
     path('students/me', StudentMeDetailsView.as_view(), name='student-me-details'),
 
+    path(
+        "students/<uuid:student_id>/reset-password",
+        ResetStudentPasswordEndpoint.as_view(),
+        name="reset-student-password",
+    ),
 ]

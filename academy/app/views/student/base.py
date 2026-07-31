@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from academy.app.permissions.base import allow_permission, ROLE
 from academy.app.serializers.course import CourseOfferingListSerializer
 from academy.app.serializers.enrollment import EnrollmentListSerializer
-from academy.app.serializers.student import StudentListSerializer, StudentCreateSerializer, StudentUpdateSerializer
+from academy.app.serializers.student import StudentListSerializer, StudentCreateSerializer, StudentUpdateSerializer, ResetStudentPasswordSerializer
 from academy.app.views.base import BaseViewSet, BaseAPIView
 from academy.db.models import Student, Enrollment, CourseOffering
 
@@ -130,3 +130,27 @@ class StudentEnrollmentsEndpoint(BaseAPIView):
 
         output = EnrollmentListSerializer(enrollments, many=True).data
         return Response(output, status=status.HTTP_200_OK)
+
+
+class ResetStudentPasswordEndpoint(BaseAPIView):
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
+    def post(self, request, *args, **kwargs):
+        logger.info("rest_student_password_started", requested_by=request.user.id)
+
+        serializer = ResetStudentPasswordSerializer(
+            data=request.data,
+            context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        student_id = self.kwargs.get("student_id")
+
+        student = Student.objects.get(pk=student_id)
+
+        user = student.user
+        user.set_password(serializer.validated_data.get("password"))
+
+        user.save()
+
+        logger.info("rest_student_password_completed", student_id=student_id, created_by=request.user.id)
+        return Response(status=status.HTTP_200_OK)

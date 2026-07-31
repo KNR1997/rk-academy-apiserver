@@ -279,3 +279,7 @@ class StudentMeDetailsSerializer(BaseSerializer):
             'gender',
             'is_active',
         ]
+
+
+class ResetStudentPasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)

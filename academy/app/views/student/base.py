@@ -120,7 +120,7 @@ class StudentMeEnrollmentsEndpoint(BaseAPIView):
 
 
 class StudentEnrollmentsEndpoint(BaseAPIView):
-    @allow_permission([ROLE.ADMIN])
+    @allow_permission([ROLE.ADMIN, ROLE.COORDINATOR])
     def get(self, request, pk):
         logger.info("student_enrollments_requested", student_id=pk, requested_by=request.user.id)
 

@@ -5,12 +5,15 @@ from django.db import models
 class GradeLevel(models.Model):
     """Model for grade levels (6, 7, 8, 9, 10, 11)"""
     GRADE_CHOICES = (
-        # (6, 'Grade 6'),
-        # (7, 'Grade 7'),
-        # (8, 'Grade 8'),
-        # (9, 'Grade 9'),
+        (6, 'Grade 6'),
+        (7, 'Grade 7'),
+        (8, 'Grade 8'),
+        (9, 'Grade 9'),
         (10, 'Grade 10'),
         (11, 'Grade 11'),
+        (12, 'Grade 12'),
+        (13, 'Grade 13'),
+        (14, 'Grade 14'),
     )
 
     level = models.IntegerField(choices=GRADE_CHOICES, unique=True)

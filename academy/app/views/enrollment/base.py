@@ -1,6 +1,8 @@
+from datetime import datetime
+
 # Third party imports
 import structlog
-from django.db.models import Q
+from django.db.models import Q, OuterRef, Subquery
 from rest_framework import status, serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -11,7 +13,7 @@ from academy.app.permissions.base import allow_permission, ROLE
 from academy.app.serializers.enrollment import EnrollmentListSerializer, EnrollmentWithPaymentMonthsSerializer, \
     EnrollmentSerializer
 from academy.app.views.base import BaseViewSet, BaseAPIView
-from academy.db.models import Enrollment, Student, CourseOffering
+from academy.db.models import Enrollment, Student, CourseOffering, EnrollmentCharge
 from academy.utils.openapi import (
     ID_PARAMETER,
     UNAUTHORIZED_RESPONSE,
@@ -213,22 +215,46 @@ class EnrollmentPendingPaymentViewSet(BaseViewSet):
     ordering_fields = ['student__user__first_name', 'created_at']
 
     def get_queryset(self):
-        queryset = super().get_queryset().filter(is_active=True)
+        current_year = datetime.now().year
+        current_month = datetime.now().month
 
-        month = self.request.query_params.get("last_payment_month")
-        year = self.request.query_params.get("last_payment_year")
-
-        if month and year:
-            month = int(month)
-            year = int(year)
-
-            queryset = queryset.filter(
-                Q(last_payment_year__lt=year) |
-                Q(
-                    last_payment_year=year,
-                    last_payment_month__lt=month
-                )
+        latest_paid = (
+            EnrollmentCharge.objects
+            .filter(
+                enrollment=OuterRef("pk"),
+                status="paid",
             )
+            .order_by("-billing_year", "-billing_month")
+        )
+
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related(
+                "student",
+                "student__user",
+                "student__current_grade",
+                "student__current_academic_year",
+                "course_offering",
+                "course_offering__subject",
+                "course_offering__grade_level",
+                "course_offering__teacher__user",
+            )
+            .annotate(
+                last_paid_year=Subquery(latest_paid.values("billing_year")[:1]),
+                last_paid_month=Subquery(latest_paid.values("billing_month")[:1]),
+            )
+            .filter(
+                Q(last_paid_year__lt=current_year)
+                | Q(
+                    last_paid_year=current_year,
+                    last_paid_month__lt=current_month,
+                )
+                | Q(last_paid_year__isnull=True)  # never paid
+            )
+            
+        )
+
         logger.info("enrollment_pending_payment_queryset_loaded")
         return self.filter_queryset(queryset)
 
